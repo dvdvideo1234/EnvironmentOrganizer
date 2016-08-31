@@ -9,10 +9,11 @@ local physenv      = physenv
 local envPrefx = "envorganiser_"
 local envFlags = bit.bor(FCVAR_ARCHIVE, FCVAR_ARCHIVE_XBOX, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_PRINTABLEONLY)
 
-CreateConVar(envPrefx.."enabled", " 0", envFlags, "Enable organizer")
+CreateConVar(envPrefx.."enabled", " 0", envFlags, "Enable environment organizer")
 
 local envEn = GetConVar(envPrefx.."enabled"):GetBool()
 if(envEn) then
+
   local ID -- General identification number
 
   -- INITIALIZE AIR DENSITY
@@ -27,8 +28,7 @@ if(envEn) then
     {"gravitydry", "Y compoinent of the gravity affecting props"}, -- VecGravity[2]
     {"gravitydrz", "Z compoinent of the gravity affecting props"}  -- VecGravity[3]
   }
-  ID = 1
-  while(gravMembers[ID]) do
+  for ID = 1, #gravMembers, 1 do
     local envMember = gravMembers[ID]
     CreateConVar(envPrefx..envMember[1], envVecGravityOld[ID], envFlags, envMember[2])
     ID = ID + 1
@@ -46,8 +46,7 @@ if(envEn) then
     {"prefmaxcolchk", "MaxCollisionChecksPerTimestep"    , "Maximum collision checks per tick"                                },
     {"prefmaxcolobj", "MaxCollisionsPerObjectPerTimestep", "Maximum collision per object per tick"                            }
   }
-  ID = 1
-  while(prefMembers[ID]) do
+  for ID = 1, #prefMembers, 1 do
     local envMember = prefMembers[ID]
     CreateConVar(envPrefx..envMember[1], envPrSettingsOld[envMember[2]], envFlags, envMember[3])
     ID = ID + 1
@@ -71,12 +70,10 @@ if(envEn) then
   function envSetGravity(sName,sOld,sNew)
     local envEn = GetConVar(envPrefx.."enabled"):GetBool()
     if(envEn) then
-      local envVecGravityNew = Vector()
-      local ID = 1
-      while(gravMembers[ID]) do
+      local envVecGravityNew, ID = Vector()
+      for ID = 1, #gravMembers, 1 do
         local envMember = gravMembers[ID]
         envVecGravityNew[ID] = GetConVar(envPrefx..envMember[1]):GetFloat()
-        ID = ID + 1
       end
       physenv.SetGravity(envVecGravityNew)
       envPrint("envSetGravity",envVecGravityOld,envVecGravityNew)
@@ -86,13 +83,11 @@ if(envEn) then
   function envSetPerformanceSettings(sName,sOld,sNew)
     local envEn = GetConVar(envPrefx.."enabled"):GetBool()
     if(envEn) then
-      local envPrSettingsNew = {}; table.Merge(envPrSettingsNew,envPrSettingsOld)
-      local ID = 1
-      while(prefMembers[ID]) do
+      local envPrSettingsNew, ID = {}; table.Merge(envPrSettingsNew,envPrSettingsOld)
+      for ID = 1, #prefMembers, 1 do
         local envMember = prefMembers[ID]
         envPrSettingsNew[envMember[2]] = GetConVar(envPrefx..envMember[1]):GetFloat()
-        envPrint(envMember[2], envPrSettingsOld[envMember[2]], envPrSettingsNew[envMember[2]])
-        ID = ID + 1
+        envPrint("envSetPerformanceSettings."..envMember[2], envPrSettingsOld[envMember[2]], envPrSettingsNew[envMember[2]])
       end
       physenv.SetPerformanceSettings(envPrSettingsNew)
     end
@@ -101,15 +96,13 @@ if(envEn) then
   -- INITIALIZE CALLBACKS
   cvars.AddChangeCallback(envPrefx..airMember[1], envSetAirDensity, "envSetAirDensity")
 
-  ID = 1
-  while(gravMembers[ID]) do
+  for ID = 1, #gravMembers, 1 do
     local envMember = gravMembers[ID]
     cvars.AddChangeCallback(envPrefx..gravMembers[1], envSetGravity, "envSetGravity_"..gravMembers[2]:sub(1,1))
     ID = ID + 1
   end
 
-  ID = 1
-  while(prefMembers[ID]) do
+  for ID = 1, #prefMembers, 1 do
     local envMember = prefMembers[ID]
     cvars.AddChangeCallback(envPrefx..envMember[1], envSetPerformanceSettings, "envSetPerformanceSettings_"..envMember[2])
     ID = ID + 1
