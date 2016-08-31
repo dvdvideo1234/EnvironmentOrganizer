@@ -17,7 +17,7 @@ local envGetCV = "envGetConvarValue: "
 
 local function envGetConvarValue( tMembers, nID )
 	local nID = tonumber( nID ) or 0
-	if ( nID <= 0 ) or ( nID > #tMembers ) then print( envOrg..envGetCV.."Invalid ID "..tostring(nID) ) return nil end
+	if ( nID <= 0 ) or ( nID > #tMembers ) then print( envOrg..envGetCV.."Invalid ID "..tostring( nID ) ) return nil end
 	local oVar = GetConVar( envPrefx..tMembers[nID][1] )
 	local sMod = tostring( tMembers[nID][4] )
 	if ( not oVar )		then print( envOrg..envGetCV.."Cvar missing" ) return nil end
@@ -26,7 +26,7 @@ local function envGetConvarValue( tMembers, nID )
 	if ( sMod == "int" )	then return oVar:GetInt() end
 	if ( sMod == "string" ) then return oVar:GetString() end
 	if ( sMod == "bool" )	then return oVar:GetBool() end
-	print( envOrg..envGetCV.."Missed mode["..tostring(nID).."] <"..sMod.."> in "..tMembers.NAM )
+	print( envOrg..envGetCV.."Missed mode["..tostring( nID ).."] <"..sMod.."> in "..tMembers.NAM )
 	return nil
 end
 
@@ -146,7 +146,7 @@ if ( envEn ) then
   end
 
   function envDumpStatusValues( oPly, oCom, oArgs )
-    local Key = tostring( ( type( oArgs ) == "table" ) and oArgs[1] or "")
+    local Key = tostring( ( type( oArgs ) == "table" ) and oArgs[1] or "" )
     print( envDumpStatus( airMembers, Key )..envDumpStatus( gravMembers, Key )..envDumpStatus( prefMembers, Key ) )
   end
 
