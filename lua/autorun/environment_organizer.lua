@@ -1,3 +1,6 @@
+local tonumber     = tonumber
+local tostring     = tostring
+local print        = print
 local Vector       = Vector
 local GetConVar    = GetConVar
 local CreateConVar = CreateConVar
@@ -39,20 +42,21 @@ if(envEn) then
     end
   end
 
-  local function envSetMemberValues(tMembers, fModify)
+  local function envFix
+
+  local function envLoadMemberValues(tMembers)
     local envEn = envGetConvarValue("enabled")
     if(envEn) then
       for ID = 1, #tMembers, 1 do
         local envMember  = tMembers[ID]
-        if(envMember[3] ~= nil) then -- Key-value pairs
+        if(envMember[3] ~= nil) then
           tMembers.NEW[envMember[3]] = envGetConvarValue(envMember[1])
-          envPrint(tMembers.NAM.."."..envMember[3], prefMembers.OLD[envMember[2]], prefMembers.NEW[envMember[2]])
+          envPrint(tMembers.NAM.."."..envMember[3], tMembers.OLD[envMember[2]], tMembers.NEW[envMember[2]])
         else -- Scalar value
           tMembers.NEW = envGetConvarValue(envMember[1])
-          envPrint(tMembers.NAM, prefMembers.OLD, prefMembers.NEW)
+          envPrint(tMembers.NAM, tMembers.OLD, tMembers.NEW)
         end
       end
-      fModify(tMembers.NEW)
     else
       print("EnvironmentOrganizer: "..tMembers.NAM..": Extension disabled")
     end
@@ -93,9 +97,9 @@ if(envEn) then
   -- https://wiki.garrysmod.com/page/Category:Vector
   local gravMembers = { -- INITIALIZE GRAVITY
     NAM = "envSetGravity", OLD = physenv.GetGravity(), NEW = Vector(),
-    {"gravitydrx", "Compoinent X of the gravity affecting props", "x", "float"}, -- VecGravity[1]
-    {"gravitydry", "Compoinent Y of the gravity affecting props", "y", "float"}, -- VecGravity[2]
-    {"gravitydrz", "Compoinent Z of the gravity affecting props", "z", "float"}  -- VecGravity[3]
+    {"gravitydrx", "Compoinent X of the gravity affecting props", "x", "float"},
+    {"gravitydry", "Compoinent Y of the gravity affecting props", "y", "float"},
+    {"gravitydrz", "Compoinent Z of the gravity affecting props", "z", "float"}
   }; envCreateMemberConvars(gravMembers)
 
   -- https://wiki.garrysmod.com/page/Category:physenv
@@ -118,15 +122,15 @@ if(envEn) then
 
   -- ENVIRONMENT MODIFIERS
   function envSetAirDensity()
-    envSetMemberValues(airMembers, physenv.SetAirDensity)
+    envLoadMemberValues(airMembers); physenv.SetAirDensity(airMembers.NEW)
   end
 
   function envSetGravity()
-    envSetMemberValues(gravMembers, physenv.SetGravity)
+    envLoadMemberValues(gravMembers); physenv.SetGravity(gravMembers.NEW)
   end
 
   function envSetPerformance()
-    envSetMemberValues(prefMembers, physenv.SetPerformanceSettings)
+    envLoadMemberValues(prefMembers); physenv.SetPerformanceSettings(prefMembers.NEW)
   end
 
   -- ENVIRONMENT STATS CONTROL
@@ -154,12 +158,3 @@ if(envEn) then
   end
 
 end
-
-
-
-
-
-
-
-
-
