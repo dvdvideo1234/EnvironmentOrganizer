@@ -104,7 +104,7 @@ if(envEn) then
   ID = 1
   while(gravMembers[ID]) do
     local envMember = gravMembers[ID]
-    cvars.AddChangeCallback(envPrefx..gravMembers[1], envSetGravity, "envSetGravity"..gravMembers[2]:sub(1,1))
+    cvars.AddChangeCallback(envPrefx..gravMembers[1], envSetGravity, "envSetGravity_"..gravMembers[2]:sub(1,1))
     ID = ID + 1
   end
 
