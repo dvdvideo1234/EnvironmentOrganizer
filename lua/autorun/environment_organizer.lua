@@ -46,10 +46,11 @@ if(envEn) then
   local function envDumpStatus(tMembers, sStatus)
     local Key = tostring(sStatus or "")
     if(not (Key == "NEW" or Key == "OLD")) then return end
-    local Out = (tMembers.NAM.."["..tMembers[Key].."]\n")
+    local Out = (tMembers.NAM.."["..Key.."]\n")
     for ID = 1, #tMembers, 1 do
       local envMember = tMembers[ID]
-      Out = Out.."  "..envMember[3]..": <"..tostring(tMembers[Key])..">\n"
+      local envDatakv = envMember[3]
+      Out = Out.."  "..envDatakv..": <"..tostring(tMembers[Key][envDatakv])..">\n"
     end; return (Out.."\n")
   end
 
