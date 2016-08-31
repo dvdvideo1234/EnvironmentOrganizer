@@ -1,4 +1,3 @@
--- https://wiki.garrysmod.com/page/Category:physenv
 local Vector       = Vector
 local GetConVar    = GetConVar
 local CreateConVar = CreateConVar
@@ -15,124 +14,116 @@ CreateConVar(envPrefx.."enabled", " 0", envFlags, "Enable environment organizer"
 local envEn = GetConVar(envPrefx.."enabled"):GetBool()
 if(envEn) then
 
-  local ID = 0 -- General identification number
-
-  -- INITIALIZE AIR DENSITY
-  local envOldAirDensity = physenv.GetAirDensity()
-  local airMembers = {"airdensity", "Aid density affecting props"}
-  CreateConVar(envPrefx..airMembers[1], envOldAirDensity, envFlags, airMemberss[2])
-
-  -- INITIALIZE GRAVITY
-  local envOldVecGravity = physenv.GetGravity()
-  local gravMembers = {
-    {"gravitydrx", "X compoinent of the gravity affecting props"}, -- VecGravity[1]
-    {"gravitydry", "Y compoinent of the gravity affecting props"}, -- VecGravity[2]
-    {"gravitydrz", "Z compoinent of the gravity affecting props"}  -- VecGravity[3]
-  }
-  for ID = 1, #gravMembers, 1 do
-    local envMember = gravMembers[ID]
-    CreateConVar(envPrefx..envMember[1], envOldVecGravity[ID], envFlags, envMember[2])
+  local function envCreateMemberConvars(tMembers)
+    for ID = 1, #tMembers, 1 do
+      local envMember = tMembers[ID]
+      CreateConVar(envPrefx..envMember[1], tMembers.OLD[ID], envFlags, envMember[2])
+    end
   end
 
-  -- INITIALIZE ENVIRONMENT SETTINGS
-  local envOldPerformance = physenv.GetPerformanceSettings()
-  local prefMembers = {
-    {"prefmaxangvel", "MaxAngularVelocity"               , "Maximum rotation velocity"                                        },
-    {"prefmaxlinvel", "MaxVelocity"                      , "Maximum speed of an object"                                       },
-    {"prefminfrmass", "MinFrictionMass"                  , "Minimum mass of an object to be affected by friction"             },
-    {"prefmaxfrmass", "MaxFrictionMass"                  , "Maximum mass of an object to be affected by friction"             },
-    {"preflooktmovo", "LookAheadTimeObjectsVsObject"     , "Maximum amount of seconds to precalculate collisions with objects"},
-    {"preflooktmovw", "LookAheadTimeObjectsVsWorld"      , "Maximum amount of seconds to precalculate collisions with world"  },
-    {"prefmaxcolchk", "MaxCollisionChecksPerTimestep"    , "Maximum collision checks per tick"                                },
-    {"prefmaxcolobj", "MaxCollisionsPerObjectPerTimestep", "Maximum collision per object per tick"                            }
-  }
-  for ID = 1, #prefMembers, 1 do
-    local envMember = prefMembers[ID]
-    CreateConVar(envPrefx..envMember[1], envOldPerformance[envMember[2]], envFlags, envMember[3])
+  local function envSetMemberValues(tMembers, fModify)
+    local envEn = GetConVar(envPrefx.."enabled"):GetBool()
+    if(envEn) then
+      for ID = 1, #tMembers, 1 do
+        local envMember  = tMembers[ID]
+        tMembers.NEW[envMember[3]] = GetConVar(envPrefx..envMember[1]):GetFloat()
+        envPrint(tMembers.NAM.."."..envMember[3], prefMembers.OLD[envMember[2]], prefMembers.NEW[envMember[2]])
+      end
+      fModify(tMembers.NEW)
+    else
+      print("EnvironmentOrganizer: "..tMembers.NAM..": Extension disabled")
+    end
   end
+
+  local function envDumpConvars(tMembers)
+    local Out = (tMembers.NAM.."\n")
+    for ID = 1, #prefMembers, 1 do
+      local envMember = prefMembers[ID]
+      Out = Out.."  "..envMember[3]..": <"..tostring(GetConVar(envPrefx..envMember[1]):GetFloat())..">\n"
+    end; return (Out.."\n")
+  end
+
+  local function envDumpStatus(tMembers, sStatus)
+    local Key = tostring(sStatus or "")
+    if(not (Key == "NEW" or Key == "OLD")) then return end
+    local Out = (tMembers.NAM.."["..tMembers[Key].."]\n")
+    for ID = 1, #tMembers, 1 do
+      local envMember = tMembers[ID]
+      Out = Out.."  "..envMember[3]..": <"..tostring(tMembers[Key])..">\n"
+    end; return (Out.."\n")
+  end
+
+  local function anvAddCallbacks(tMembers, fCallback)
+    for ID = 1, #tMembers, 1 do
+      local envMember = tMembers[ID]
+      cvars.AddChangeCallback(envPrefx..envMember[1], fCallback, tMembers.NAM.."_"..envMember[3])
+    end
+  end
+
+  -- https://wiki.garrysmod.com/page/Category:number
+  local airMembers = { -- INITIALIZE AIR DENSITY
+    NAM = "envSetAirDensity", OLD = {Data = physenv.GetAirDensity()}, NEW = {Data = 0},
+    {"airdensity", "Air density affecting props", "Data"}
+  }; envCreateMemberConvars(airMembers)
+
+  -- https://wiki.garrysmod.com/page/Category:Vector
+  local gravMembers = { -- INITIALIZE GRAVITY
+    NAM = "envSetGravity", OLD = physenv.GetGravity(), NEW = Vector(),
+    {"gravitydrx", "Compoinent X of the gravity affecting props", "x"}, -- VecGravity[1]
+    {"gravitydry", "Compoinent Y of the gravity affecting props", "y"}, -- VecGravity[2]
+    {"gravitydrz", "Compoinent Z of the gravity affecting props", "z"}  -- VecGravity[3]
+  }; envCreateMemberConvars(gravMembers)
+
+  -- https://wiki.garrysmod.com/page/Category:physenv
+  local prefMembers = { -- INITIALIZE ENVIRONMENT SETTINGS
+    NAM = "envSetPerformance", OLD = physenv.GetPerformanceSettings(), NEW = {},
+    {"prefmaxangvel", "Maximum rotation velocity"                                        , "MaxAngularVelocity"               },
+    {"prefmaxlinvel", "Maximum speed of an object"                                       , "MaxVelocity"                      },
+    {"prefminfrmass", "Minimum mass of an object to be affected by friction"             , "MinFrictionMass"                  },
+    {"prefmaxfrmass", "Maximum mass of an object to be affected by friction"             , "MaxFrictionMass"                  },
+    {"preflooktmovo", "Maximum amount of seconds to precalculate collisions with objects", "LookAheadTimeObjectsVsObject"     },
+    {"preflooktmovw", "Maximum amount of seconds to precalculate collisions with world"  , "LookAheadTimeObjectsVsWorld"      },
+    {"prefmaxcolchk", "Maximum collision checks per tick"                                , "MaxCollisionChecksPerTimestep"    },
+    {"prefmaxcolobj", "Maximum collision per object per tick"                            , "MaxCollisionsPerObjectPerTimestep"}
+  }; envCreateMemberConvars(prefMembers)
 
   -- LOGGING
-  function envPrint(anyParam, anyOld, anyNew)
+  local function envPrintDelta(anyParam, anyOld, anyNew)
     print("EnvironmentOrganizer: ["..tostring(anyParam).."] Old<"..tostring(anyOld).."> New<"..tostring(anyNew)..">")
   end
 
   -- ENVIRONMENT MODIFIERS
   function envSetAirDensity()
-    local envEn = GetConVar(envPrefx.."enabled"):GetBool()
-    if(envEn) then
-      local envNewAirDensity = GetConVar(envPrefx..airMembers[1]):GetFloat()
-      physenv.SetAirDensity(envNewAirDensity)
-      envPrint("envSetAirDensity",envOldAirDensity,envNewAirDensity)
-    end
+    envSetMemberValues(airMembers, physenv.SetAirDensity)
   end
 
   function envSetGravity()
-    local envEn = GetConVar(envPrefx.."enabled"):GetBool()
-    if(envEn) then
-      local envNewVecGravity, ID = Vector()
-      for ID = 1, #gravMembers, 1 do
-        local envMember = gravMembers[ID]
-        envNewVecGravity[ID] = GetConVar(envPrefx..envMember[1]):GetFloat()
-      end
-      physenv.SetGravity(envNewVecGravity)
-      envPrint("envSetGravity",envOldVecGravity,envNewVecGravity)
-    end
+    envSetMemberValues(gravMembers, physenv.SetGravity)
   end
 
   function envSetPerformance()
-    local envEn = GetConVar(envPrefx.."enabled"):GetBool()
-    if(envEn) then
-      local envNewPerformance, ID = {}; table.Merge(envNewPerformance,envOldPerformance)
-      for ID = 1, #prefMembers, 1 do
-        local envMember = prefMembers[ID]
-        envNewPerformance[envMember[2]] = GetConVar(envPrefx..envMember[1]):GetFloat()
-        envPrint("envSetPerformance."..envMember[2], envOldPerformance[envMember[2]], envNewPerformance[envMember[2]])
-      end
-      physenv.SetPerformanceSettings(envNewPerformance)
-    end
+    envSetMemberValues(prefMembers, physenv.SetPerformanceSettings)
   end
 
   -- ENVIRONMENT STATS CONTROL
-  function envDumpConvars()
-    local sDump, ID = "", 0; print("envDumpConvars: Dumping\n")
-          sDump = sDump.."  envSetAirDensity: <"..tostring(GetConVar(envPrefx..airMembers[1]):GetFloat())..">\n"
-    for ID = 1, #gravMembers, 1 do
-      local envMember = gravMembers[ID]
-      sDump = sDump.."  envSetGravity."..envMember[2]:sub(1,1)..": <"..tostring(GetConVar(envPrefx..envMember[1]):GetFloat())..">\n"
-    end
-    for ID = 1, #prefMembers, 1 do
-      local envMember = prefMembers[ID]
-      sDump = sDump.."  envSetPerformance."..envMember[2]..": <"..tostring(GetConVar(envPrefx..envMember[1]):GetFloat())..">\n"
-    end; print(sDump.."\n")
+  function envDumpConvarValues()
+    print(envDumpConvars(airMembers)..envDumpConvars(gravMembers)..envDumpConvars(prefMembers))
   end
 
-  function envDumpStatus()
-    local sDump, ID = "", 0; print("envDumpConvars: Dumping\n")
-          sDump = sDump.."  envSetAirDensity: <"..tostring(envOldAirDensity)..">\n"
-          sDump = sDump.."  envSetGravity   : <"..tostring(envOldVecGravity)..">\n"
-    for ID = 1, #prefMembers, 1 do
-      local envMember = prefMembers[ID]
-      sDump = sDump.."  envSetPerformance."..envMember[2]..": <"..tostring(envOldPerformance)..">\n"
-    end; print(sDump.."\n")
+  function envDumpStatusValues(oPly,oCom,oArgs)
+    local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
+    print(envDumpStatus(airMembers,Key)..envDumpStatus(gravMembers,Key)..envDumpStatus(prefMembers,Key))
   end
 
   if(SERVER) then -- INITIALIZE CALLBACKS
-    cvars.AddChangeCallback(envPrefx..airMembers[1], envSetAirDensity, "envSetAirDensity")
-
-    for ID = 1, #gravMembers, 1 do
-      local envMember = gravMembers[ID]
-      cvars.AddChangeCallback(envPrefx..gravMembers[1], envSetGravity, "envSetGravity_"..gravMembers[2]:sub(1,1))
-    end
-
-    for ID = 1, #prefMembers, 1 do
-      local envMember = prefMembers[ID]
-      cvars.AddChangeCallback(envPrefx..envMember[1], envSetPerformance, "envSetPerformance_"..envMember[2])
-    end
+    anvAddCallbacks(airMembers , envSetAirDensity)
+    anvAddCallbacks(gravMembers, envSetGravity)
+    anvAddCallbacks(prefMembers, envSetPerformance)
   end
 
   if(CLIENT) then -- INITIALIZE DIRECT COMMANDS
-    concommand.Add(envPrefx.."envdumpconvars"   ,envDumpConvars)
-    concommand.Add(envPrefx.."envdumpstatus"    ,envDumpStatus)
+    concommand.Add(envPrefx.."envdumpconvars"   ,envDumpConvarValues)
+    concommand.Add(envPrefx.."envdumpstatus"    ,envDumpStatusValues)
     concommand.Add(envPrefx.."envsetairdensity" ,envSetAirDensity)
     concommand.Add(envPrefx.."envsetgravity"    ,envSetGravity)
     concommand.Add(envPrefx.."envsetperformance",envSetPerformance)
