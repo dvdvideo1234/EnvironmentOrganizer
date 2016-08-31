@@ -20,8 +20,8 @@ local function envGetConvarValue( tMembers, nID )
 	if ( nID <= 0 ) or ( nID > #tMembers ) then print( envOrg..envGetCV.."Invalid ID "..tostring(nID) ) return nil end
 	local oVar = GetConVar( envPrefx..tMembers[nID][1] )
 	local sMod = tostring( tMembers[nID][4] )
-	if ( not oVar )			then print( envOrg..envGetCV.."Cvar missing" ) return nil end
-	if ( sMod == "" )		then print( envOrg..envGetCV.."Mode missing" ) return nil end
+	if ( not oVar )		then print( envOrg..envGetCV.."Cvar missing" ) return nil end
+	if ( sMod == "" )	then print( envOrg..envGetCV.."Mode missing" ) return nil end
 	if ( sMod == "float" )	then return oVar:GetFloat() end
 	if ( sMod == "int" )	then return oVar:GetInt() end
 	if ( sMod == "string" ) then return oVar:GetString() end
@@ -156,7 +156,7 @@ if ( envEn ) then
     envAddCallbacks( prefMembers, envSetPerformance )
   end
 
-  if ( CLIENT ) then -- INITIALIZE DIRECT COMMANDS
+  if( CLIENT ) then -- INITIALIZE DIRECT COMMANDS
     concommand.Add( envPrefx.."envdumpconvars"   , envDumpConvarValues )
     concommand.Add( envPrefx.."envdumpstatus"    , envDumpStatusValues )
     concommand.Add( envPrefx.."envsetairdensity" , envSetAirDensity )
