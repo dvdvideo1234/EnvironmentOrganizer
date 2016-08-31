@@ -156,7 +156,7 @@ if ( envEn ) then
     envAddCallbacks( prefMembers, envSetPerformance )
   end
 
-  if( CLIENT ) then -- INITIALIZE DIRECT COMMANDS
+  if ( CLIENT ) then -- INITIALIZE DIRECT COMMANDS
     concommand.Add( envPrefx.."envdumpconvars"   , envDumpConvarValues )
     concommand.Add( envPrefx.."envdumpstatus"    , envDumpStatusValues )
     concommand.Add( envPrefx.."envsetairdensity" , envSetAirDensity )
