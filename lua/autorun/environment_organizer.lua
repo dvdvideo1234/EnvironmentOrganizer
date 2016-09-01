@@ -42,8 +42,6 @@ if(envEn) then
     end
   end
 
-  local function envFix
-
   local function envLoadMemberValues(tMembers)
     local envEn = envGetConvarValue("enabled")
     if(envEn) then
@@ -52,7 +50,7 @@ if(envEn) then
         if(envMember[3] ~= nil) then
           tMembers.NEW[envMember[3]] = envGetConvarValue(envMember[1])
           envPrint(tMembers.NAM.."."..envMember[3], tMembers.OLD[envMember[2]], tMembers.NEW[envMember[2]])
-        else -- Scalar value
+        else -- Scalar, non-table value
           tMembers.NEW = envGetConvarValue(envMember[1])
           envPrint(tMembers.NAM, tMembers.OLD, tMembers.NEW)
         end
@@ -81,10 +79,10 @@ if(envEn) then
     end; return (Out.."\n")
   end
 
-  local function envAddCallbacks(tMembers, fCallback)
+  local function envAddCallBacks(tMembers, fCall)
     for ID = 1, #tMembers, 1 do
       local envMember = tMembers[ID]
-      cvars.AddChangeCallback(envPrefx..envMember[1], fCallback, tMembers.NAM.."_"..envMember[3])
+      cvars.AddChangeCallback(envPrefx..envMember[1], fCall, tMembers.NAM.."_"..envMember[3])
     end
   end
 
@@ -121,40 +119,51 @@ if(envEn) then
   end
 
   -- ENVIRONMENT MODIFIERS
-  function envSetAirDensity()
-    envLoadMemberValues(airMembers); physenv.SetAirDensity(airMembers.NEW)
+  function envSetAirDensity(oPly,oCom,oArgs)
+    envLoadMemberValues(airMembers) -- Sets the air density on proper key
+    local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
+    if(not (Key == "NEW" or Key == "OLD")) then
+      print("EnvironmentOrganizer: envSetAirDensity: Invalid key <"..Key..">"); return end
+    physenv.SetAirDensity(airMembers[Key])
   end
 
-  function envSetGravity()
-    envLoadMemberValues(gravMembers); physenv.SetGravity(gravMembers.NEW)
+  function envSetGravity(oPly,oCom,oArgs)
+    envLoadMemberValues(gravMembers) -- Sets the gravity vector for props on proper key
+    local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
+    if(not (Key == "NEW" or Key == "OLD")) then
+      print("EnvironmentOrganizer: envSetAirDensity: Invalid key <"..Key..">"); return end
+    physenv.SetGravity(gravMembers[Key])
   end
 
-  function envSetPerformance()
-    envLoadMemberValues(prefMembers); physenv.SetPerformanceSettings(prefMembers.NEW)
+  function envSetPerformance(oPly,oCom,oArgs)
+    envLoadMemberValues(prefMembers) -- Sets the performance on proper key
+    local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
+    if(not (Key == "NEW" or Key == "OLD")) then
+      print("EnvironmentOrganizer: envSetAirDensity: Invalid key <"..Key..">"); return end
+    physenv.SetPerformanceSettings(prefMembers[Key])
   end
 
-  -- ENVIRONMENT STATS CONTROL
-  function envDumpConvarValues()
+  function envDumpConvarValues() -- The values in the convars. Does not affect NEW key
     print(envDumpConvars(airMembers)..envDumpConvars(gravMembers)..envDumpConvars(prefMembers))
   end
 
-  function envDumpStatusValues(oPly,oCom,oArgs)
+  function envDumpStatusValues(oPly,oCom,oArgs) -- Dumps whatever is found under the given key
     local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
     print(envDumpStatus(airMembers,Key)..envDumpStatus(gravMembers,Key)..envDumpStatus(prefMembers,Key))
   end
 
-  if(SERVER) then -- INITIALIZE CALLBACKS
-    envAddCallbacks(airMembers , envSetAirDensity)
-    envAddCallbacks(gravMembers, envSetGravity)
-    envAddCallbacks(prefMembers, envSetPerformance)
+  if(SERVER) then -- Refresh the NEW key on change
+    envAddCallBacks(airMembers , envSetAirDensity)
+    envAddCallBacks(gravMembers, envSetGravity)
+    envAddCallBacks(prefMembers, envSetPerformance)
   end
 
-  if(CLIENT) then -- INITIALIZE DIRECT COMMANDS
-    concommand.Add(envPrefx.."envdumpconvars"   ,envDumpConvarValues)
-    concommand.Add(envPrefx.."envdumpstatus"    ,envDumpStatusValues)
-    concommand.Add(envPrefx.."envsetairdensity" ,envSetAirDensity)
-    concommand.Add(envPrefx.."envsetgravity"    ,envSetGravity)
-    concommand.Add(envPrefx.."envsetperformance",envSetPerformance)
+  if(CLIENT) then -- User control commands
+    concommand.Add(envPrefx.."dumpconvars"   ,envDumpConvarValues)
+    concommand.Add(envPrefx.."dumpstatus"    ,envDumpStatusValues)
+    concommand.Add(envPrefx.."setairdensity" ,envSetAirDensity)
+    concommand.Add(envPrefx.."setgravity"    ,envSetGravity)
+    concommand.Add(envPrefx.."setperformance",envSetPerformance)
   end
 
 end
