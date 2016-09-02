@@ -23,14 +23,14 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
 
   local function envPrint(...) if(not enLog) then return end; print(...) end
 
-  local function envGetConvarType(oVar, sTyp, sNam) -- Called inside only
+  local function envGetConvarType(oVar, sTyp) -- Called inside only
     local sTyp = tostring(sTyp or "")
     if(not oVar) then envPrint(envAddon.."envGetConvarType: Cvar missing"); return nil end
     if(sTyp == "float" ) then return oVar:GetFloat () end
     if(sTyp == "int"   ) then return oVar:GetInt   () end
     if(sTyp == "string") then return oVar:GetString() end
     if(sTyp == "bool"  ) then return oVar:GetBool  () end
-    envPrint(envAddon.."envGetConvarType: Missed <"..sTyp.."> for <"..tostring(sNam)..">"); return nil
+    envPrint(envAddon.."envGetConvarType: Missed <"..sTyp..">"); return nil
   end
 
   local function envGetConvarValue(envMember)
@@ -42,7 +42,7 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     local sTyp = tostring(envMember[4] or ""); if(sTyp == "") then
       envPrint(envAddon.."envGetConvarValue: Mode missing"); return nil end
     local anyVal = envGetConvarType(oVar, sTyp, sNam); if(not anyVal) then
-      envPrint(envAddon.."envGetConvarValue: Missed type <"..sTyp.."> for <"..sNam.."> in "..tMembers.NAM); return nil end
+      envPrint(envAddon.."envGetConvarValue: Missed <"..tostring(anyVal).."> type <"..sTyp.."> for <"..sNam.."> in "..tMembers.NAM); return nil end
     return anyVal
   end
 
@@ -53,16 +53,16 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     end
   end
 
-  local function envValidateConvar(envValue, envMember)
+  local function envValidateMember(envMember, envValue)
     local sType = tostring(envMember[4] or ""); if(sType == "") then
-      envPrint(envAddon.."envApplyLimit: Type missing for <"..tostring(envMember[4])..">"); return nil end
+      envPrint(envAddon.."envValidateMember: Type missing for <"..tostring(envMember[4])..">"); return nil end
     if(sType == "float" or sType == "int") then
       local envLimit = tostring(envMember[5] or ""); if(envLimit == "") then return envValue end
-      if(envLimit == "+"  and envValue and envValue >  0) then return envValue else return nil end
-      if(envLimit == "0+" and envValue and envValue >= 0) then return envValue else return nil end
-      if(envLimit == "-"  and envValue and envValue <  0) then return envValue else return nil end
-      if(envLimit == "0-" and envValue and envValue <= 0) then return envValue else return nil end
-      envPrint(envAddon.."envApplyLimit: Limit <"..envLimit.."> mismatched")
+      if    (envLimit == "+"  and envValue and envValue >  0) then return envValue
+      elseif(envLimit == "0+" and envValue and envValue >= 0) then return envValue
+      elseif(envLimit == "-"  and envValue and envValue <  0) then return envValue
+      elseif(envLimit == "0-" and envValue and envValue <= 0) then return envValue
+      else envPrint(envAddon.."envValidateMember: Limit <"..envLimit.."> mismatched <"..envMember[1]..">"); return nil end
     else return envValue end
   end
 
@@ -71,11 +71,11 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
       local envMember  = tMembers[ID]
       local envKeyID   = envMember[3]
       if(envKeyID ~= nil) then
-        local envValue = envValidateConvar(envGetConvarValue(envMember), envMember)
+        local envValue = envValidateMember(envMember, envGetConvarValue(envMember))
         if(envValue) then tMembers.NEW[envKeyID] = envValue else tMembers.NEW[envKeyID] = tMembers.OLD[envKeyID] end
         envPrint(tMembers.NAM.."."..envKeyID, tMembers.OLD[envKeyID], tMembers.NEW[envKeyID])
       else -- Scalar, non-table value
-        local envValue = envValidateConvar(envGetConvarValue(envMember), envMember)
+        local envValue = envValidateMember(envMember, envGetConvarValue(envMember))
         if(envValue) then tMembers.NEW = envValue else tMembers.NEW = tMembers.OLD end
         envPrint(tMembers.NAM, tMembers.OLD, tMembers.NEW)
       end
@@ -199,4 +199,7 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
   envSetGravity    (nil,nil,{"NEW"})
   envSetPerformance(nil,nil,{"NEW"})
 
+  print(envAddon.."Disabled")
+else
+  print(envAddon.."Enabled")
 end
