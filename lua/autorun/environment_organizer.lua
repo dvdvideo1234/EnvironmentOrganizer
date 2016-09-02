@@ -10,48 +10,48 @@ local physenv      = physenv
 local concommand   = concommand
 
 local envPrefx = "envorganiser_"
+local envAddon = "envOrganizer: "
 local envFlags = bit.bor(FCVAR_ARCHIVE, FCVAR_ARCHIVE_XBOX, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_PRINTABLEONLY)
 local envFlogs = bit.bor(FCVAR_ARCHIVE, FCVAR_ARCHIVE_XBOX, FCVAR_NOTIFY, FCVAR_PRINTABLEONLY)
 
-CreateConVar(envPrefx.."logsuse", " 0", envFlogs, "Enable logging on error")
+CreateConVar(envPrefx.."logused", " 0", envFlogs, "Enable logging on error")
 CreateConVar(envPrefx.."enabled", " 0", envFlags, "Enable organizer addon")
 
-local enLog = GetConVar(envPrefx.."logsuse"):GetBool()
+local enLog = GetConVar(envPrefx.."logused"):GetBool()
 
 local function envPrint(...)
-  if(not enLog) then return end
-  print(...)
+  if(not enLog) then return end; print(...)
 end
 
 if(GetConVar(envPrefx.."enabled"):GetBool()) then
 
-  local function envSwitchConvarMode(oVar, sMode, sName) -- Called inside only
+  local function envGetConvarMode(oVar, sMode, sName) -- Called inside only
     local sMode = tostring(sMode or "")
-    if(not oVar) then envPrint("EnvironmentOrganizer: envSwitchConvarMode: Cvar missing"); return nil end
+    if(not oVar) then envPrint(envAddon.."envGetConvarMode: Cvar missing"); return nil end
     if(sMode == "float" ) then return oVar:GetFloat () end
     if(sMode == "int"   ) then return oVar:GetInt   () end
     if(sMode == "string") then return oVar:GetString() end
     if(sMode == "bool"  ) then return oVar:GetBool  () end
-    envPrint("EnvironmentOrganizer: envSwitchConvarMode: Missed <"..sMode.."> for <"..tostring(sName)..">"); return nil
+    envPrint(envAddon.."envGetConvarMode: Missed <"..sMode.."> for <"..tostring(sName)..">"); return nil
   end
 
   local function envGetConvarValue(sName, sMode, tMembers, nID)
     local sNam = tostring(sName or ""); if(sNam == "") then
-      envPrint("EnvironmentOrganizer: envGetConvarValue: Name empty"); return nil end
+      envPrint(envAddon.."envGetConvarValue: Name empty"); return nil end
     local oVar = GetConVar(envPrefx..sNam); if(not oVar) then
-      envPrint("EnvironmentOrganizer: envGetConvarValue: Cvar <"..sNam.."> missing"); return nil end
+      envPrint(envAddon.."envGetConvarValue: Cvar <"..sNam.."> missing"); return nil end
     if(tMembers and nID) then
       local uID = (tonumber(nID) or 0); if(uID <= 0) then
-        envPrint("EnvironmentOrganizer: envGetConvarValue(m): ID <"..tostring(uID).."> invalid"); return nil end
+        envPrint(envAddon.."envGetConvarValue(m): ID <"..tostring(uID).."> invalid"); return nil end
       local sMode = tostring(tMembers[uID][4]); if(sMode == "") then
-        envPrint("EnvironmentOrganizer: envGetConvarValue(m): Mode missing"); return nil end
-      local anyVal = envSwitchConvarMode(oVar, sMode, sName); if(not anyVal) then
-        envPrint("EnvironmentOrganizer: envGetConvarValue(m): Missed mode["..tostring(uID).."] <"..sMode.."> in "..tMembers.NAM); return nil end
+        envPrint(envAddon.."envGetConvarValue(m): Mode missing"); return nil end
+      local anyVal = envGetConvarMode(oVar, sMode, sName); if(not anyVal) then
+        envPrint(envAddon.."envGetConvarValue(m): Missed mode["..tostring(uID).."] <"..sMode.."> in "..tMembers.NAM); return nil end
     else
       local sMode = tostring(sMode or ""); if(sMode == "") then
-        envPrint("EnvironmentOrganizer: envGetConvarValue(x): Mode missing"); return nil end
-      local anyVal = envSwitchConvarMode(oVar, sMode, sName); if(not anyVal) then
-        envPrint("EnvironmentOrganizer: envGetConvarValue(x): Missed mode["..tostring(uID).."] <"..sMode.."> in "..tMembers.NAM); return nil end
+        envPrint(envAddon.."envGetConvarValue(x): Mode missing"); return nil end
+      local anyVal = envGetConvarMode(oVar, sMode, sName); if(not anyVal) then
+        envPrint(envAddon.."envGetConvarValue(x): Missed mode["..tostring(uID).."] <"..sMode.."> in "..tMembers.NAM); return nil end
     end; return anyVal
   end
 
@@ -66,10 +66,13 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     for ID = 1, #tMembers, 1 do
       local envMember  = tMembers[ID]
       if(envMember[3] ~= nil) then
-        tMembers.NEW[envMember[3]] = envGetConvarValue(envMember[1], envMember[4], tMembers, ID)
+        local envValue = envGetConvarValue(envMember[1], envMember[4], tMembers, ID)
+        tMembers.NEW[envMember[3]] = ((envValue > 0) and envValue or 0)
+        if(envValue and envValue > 0) then tMembers.NEW = envValue else tMembers.NEW = tMembers.OLD end
         envPrint(tMembers.NAM.."."..envMember[3], tMembers.OLD[envMember[2]], tMembers.NEW[envMember[2]])
       else -- Scalar, non-table value
-        tMembers.NEW = envGetConvarValue(envMember[1], envMember[4], tMembers, ID)
+        local envValue = envGetConvarValue(envMember[1], envMember[4], tMembers, ID)
+        if(envValue and envValue > 0) then tMembers.NEW = envValue else tMembers.NEW = tMembers.OLD end
         envPrint(tMembers.NAM, tMembers.OLD, tMembers.NEW)
       end
     end
@@ -77,8 +80,8 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
 
   local function envDumpConvars(tMembers)
     local Out = (tMembers.NAM.."\n")
-    for ID = 1, #prefMembers, 1 do
-      local envMember = prefMembers[ID]
+    for ID = 1, #perfMembers, 1 do
+      local envMember = perfMembers[ID]
       Out = Out.."  "..envMember[3]..": <"..tostring(envGetConvarValue(envMember[1], envMember[4], tMembers, ID))..">\n"
     end; return (Out.."\n")
   end
@@ -110,27 +113,27 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
   -- https://wiki.garrysmod.com/page/Category:Vector
   local gravMembers = { -- INITIALIZE GRAVITY
     NAM = "envSetGravity", OLD = physenv.GetGravity(), NEW = Vector(),
-    {"gravitydrx", "Compoinent X of the gravity affecting props", "x", "float"},
-    {"gravitydry", "Compoinent Y of the gravity affecting props", "y", "float"},
-    {"gravitydrz", "Compoinent Z of the gravity affecting props", "z", "float"}
+    {"gravitydrx", "Component X of the gravity affecting props", "x", "float"},
+    {"gravitydry", "Component Y of the gravity affecting props", "y", "float"},
+    {"gravitydrz", "Component Z of the gravity affecting props", "z", "float"}
   }; envCreateMemberConvars(gravMembers)
 
   -- https://wiki.garrysmod.com/page/Category:physenv
-  local prefMembers = { -- INITIALIZE ENVIRONMENT SETTINGS
+  local perfMembers = { -- INITIALIZE ENVIRONMENT SETTINGS
     NAM = "envSetPerformance", OLD = physenv.GetPerformanceSettings(), NEW = {},
-    {"prefmaxangvel", "Maximum rotation velocity"                                        , "MaxAngularVelocity"               , "float"},
-    {"prefmaxlinvel", "Maximum speed of an object"                                       , "MaxVelocity"                      , "float"},
-    {"prefminfrmass", "Minimum mass of an object to be affected by friction"             , "MinFrictionMass"                  , "float"},
-    {"prefmaxfrmass", "Maximum mass of an object to be affected by friction"             , "MaxFrictionMass"                  , "float"},
-    {"preflooktmovo", "Maximum amount of seconds to precalculate collisions with objects", "LookAheadTimeObjectsVsObject"     , "float"},
-    {"preflooktmovw", "Maximum amount of seconds to precalculate collisions with world"  , "LookAheadTimeObjectsVsWorld"      , "float"},
-    {"prefmaxcolchk", "Maximum collision checks per tick"                                , "MaxCollisionChecksPerTimestep"    , "float"},
-    {"prefmaxcolobj", "Maximum collision per object per tick"                            , "MaxCollisionsPerObjectPerTimestep", "float"}
-  }; envCreateMemberConvars(prefMembers)
+    {"perfmaxangvel", "Maximum rotation velocity"                                        , "MaxAngularVelocity"               , "float"},
+    {"perfmaxlinvel", "Maximum speed of an object"                                       , "MaxVelocity"                      , "float"},
+    {"perfminfrmass", "Minimum mass of an object to be affected by friction"             , "MinFrictionMass"                  , "float"},
+    {"perfmaxfrmass", "Maximum mass of an object to be affected by friction"             , "MaxFrictionMass"                  , "float"},
+    {"perflooktmovo", "Maximum amount of seconds to precalculate collisions with objects", "LookAheadTimeObjectsVsObject"     , "float"},
+    {"perflooktmovw", "Maximum amount of seconds to precalculate collisions with world"  , "LookAheadTimeObjectsVsWorld"      , "float"},
+    {"perfmaxcolchk", "Maximum collision checks per tick"                                , "MaxCollisionChecksPerTimestep"    , "float"},
+    {"perfmaxcolobj", "Maximum collision per object per tick"                            , "MaxCollisionsPerObjectPerTimestep", "float"}
+  }; envCreateMemberConvars(perfMembers)
 
   -- LOGGING
   local function envPrintDelta(anyParam, anyOld, anyNew)
-    envPrint("EnvironmentOrganizer: ["..tostring(anyParam).."] Old<"..tostring(anyOld).."> New<"..tostring(anyNew)..">")
+    envPrint(envAddon.."["..tostring(anyParam).."] Old<"..tostring(anyOld).."> New<"..tostring(anyNew)..">")
   end
 
   -- ENVIRONMENT MODIFIERS
@@ -138,7 +141,7 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     envLoadMemberValues(airMembers) -- Sets the air density on proper key
     local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
     if(not (Key == "NEW" or Key == "OLD")) then
-      envPrint("EnvironmentOrganizer: envSetAirDensity: Invalid key <"..Key..">"); return end
+      envPrint(envAddon.."envSetAirDensity: Invalid key <"..Key..">"); return end
     physenv.SetAirDensity(airMembers[Key])
   end
 
@@ -146,36 +149,36 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     envLoadMemberValues(gravMembers) -- Sets the gravity vector for props on proper key
     local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
     if(not (Key == "NEW" or Key == "OLD")) then
-      envPrint("EnvironmentOrganizer: envSetAirDensity: Invalid key <"..Key..">"); return end
+      envPrint(envAddon.."envSetAirDensity: Invalid key <"..Key..">"); return end
     physenv.SetGravity(gravMembers[Key])
   end
 
   function envSetPerformance(oPly,oCom,oArgs)
-    envLoadMemberValues(prefMembers) -- Sets the performance on proper key
+    envLoadMemberValues(perfMembers) -- Sets the performance on proper key
     local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
     if(not (Key == "NEW" or Key == "OLD")) then
-      envPrint("EnvironmentOrganizer: envSetAirDensity: Invalid key <"..Key..">"); return end
-    physenv.SetPerformanceSettings(prefMembers[Key])
+      envPrint(envAddon.."envSetAirDensity: Invalid key <"..Key..">"); return end
+    physenv.SetPerformanceSettings(perfMembers[Key])
   end
 
   function envDumpConvarValues() -- The values in the convars. Does not affect NEW key
-    envPrint(envDumpConvars(airMembers)..envDumpConvars(gravMembers)..envDumpConvars(prefMembers))
+    envPrint(envDumpConvars(airMembers)..envDumpConvars(gravMembers)..envDumpConvars(perfMembers))
   end
 
   function envDumpStatusValues(oPly,oCom,oArgs) -- Dumps whatever is found under the given key
     local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
-    envPrint(envDumpStatus(airMembers,Key)..envDumpStatus(gravMembers,Key)..envDumpStatus(prefMembers,Key))
+    envPrint(envDumpStatus(airMembers,Key)..envDumpStatus(gravMembers,Key)..envDumpStatus(perfMembers,Key))
   end
 
   function envLogRefresh(oPly,oCom,oArgs) -- Dumps whatever is found under the given key
-    oPly:ConCommand(envPrefx.."logsuse "..tostring(tonumber(oArgs[1]) or 0))
-    enLog = GetConVar(envPrefx.."logsuse"):GetBool()
+    oPly:ConCommand(envPrefx.."logused "..tostring(tonumber(oArgs[1]) or 0))
+    enLog = GetConVar(envPrefx.."logused"):GetBool()
   end
 
   if(SERVER) then -- Refresh the NEW key on change
     envAddCallBacks(airMembers , envSetAirDensity)
     envAddCallBacks(gravMembers, envSetGravity)
-    envAddCallBacks(prefMembers, envSetPerformance)
+    envAddCallBacks(perfMembers, envSetPerformance)
   end
 
   if(CLIENT) then -- User control commands
@@ -186,5 +189,10 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     concommand.Add(envPrefx.."setgravity"    ,envSetGravity)
     concommand.Add(envPrefx.."setperformance",envSetPerformance)
   end
+
+  -- Apply the values in the consola variables on the server environment
+  envSetAirDensity (nil,nil,{"NEW"})
+  envSetGravity    (nil,nil,{"NEW"})
+  envSetPerformance(nil,nil,{"NEW"})
 
 end
