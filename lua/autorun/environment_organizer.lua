@@ -19,40 +19,31 @@ CreateConVar(envPrefx.."enabled", " 0", envFlags, "Enable organizer addon")
 
 local enLog = GetConVar(envPrefx.."logused"):GetBool()
 
-local function envPrint(...)
-  if(not enLog) then return end; print(...)
-end
-
 if(GetConVar(envPrefx.."enabled"):GetBool()) then
 
-  local function envGetConvarMode(oVar, sMode, sName) -- Called inside only
-    local sMode = tostring(sMode or "")
-    if(not oVar) then envPrint(envAddon.."envGetConvarMode: Cvar missing"); return nil end
-    if(sMode == "float" ) then return oVar:GetFloat () end
-    if(sMode == "int"   ) then return oVar:GetInt   () end
-    if(sMode == "string") then return oVar:GetString() end
-    if(sMode == "bool"  ) then return oVar:GetBool  () end
-    envPrint(envAddon.."envGetConvarMode: Missed <"..sMode.."> for <"..tostring(sName)..">"); return nil
+  local function envPrint(...) if(not enLog) then return end; print(...) end
+
+  local function envGetConvarType(oVar, sTyp, sNam) -- Called inside only
+    local sTyp = tostring(sTyp or "")
+    if(not oVar) then envPrint(envAddon.."envGetConvarType: Cvar missing"); return nil end
+    if(sTyp == "float" ) then return oVar:GetFloat () end
+    if(sTyp == "int"   ) then return oVar:GetInt   () end
+    if(sTyp == "string") then return oVar:GetString() end
+    if(sTyp == "bool"  ) then return oVar:GetBool  () end
+    envPrint(envAddon.."envGetConvarType: Missed <"..sTyp.."> for <"..tostring(sNam)..">"); return nil
   end
 
-  local function envGetConvarValue(sName, sMode, tMembers, nID)
-    local sNam = tostring(sName or ""); if(sNam == "") then
+  local function envGetConvarValue(envMember)
+    if(not envMember) then envPrint(envAddon.."envGetConvarValue: Member missing"); return nil end
+    local sNam = tostring(envMember[1] or ""); if(sNam == "") then
       envPrint(envAddon.."envGetConvarValue: Name empty"); return nil end
     local oVar = GetConVar(envPrefx..sNam); if(not oVar) then
       envPrint(envAddon.."envGetConvarValue: Cvar <"..sNam.."> missing"); return nil end
-    if(tMembers and nID) then
-      local uID = (tonumber(nID) or 0); if(uID <= 0) then
-        envPrint(envAddon.."envGetConvarValue(m): ID <"..tostring(uID).."> invalid"); return nil end
-      local sMode = tostring(tMembers[uID][4]); if(sMode == "") then
-        envPrint(envAddon.."envGetConvarValue(m): Mode missing"); return nil end
-      local anyVal = envGetConvarMode(oVar, sMode, sName); if(not anyVal) then
-        envPrint(envAddon.."envGetConvarValue(m): Missed mode["..tostring(uID).."] <"..sMode.."> in "..tMembers.NAM); return nil end
-    else
-      local sMode = tostring(sMode or ""); if(sMode == "") then
-        envPrint(envAddon.."envGetConvarValue(x): Mode missing"); return nil end
-      local anyVal = envGetConvarMode(oVar, sMode, sName); if(not anyVal) then
-        envPrint(envAddon.."envGetConvarValue(x): Missed mode["..tostring(uID).."] <"..sMode.."> in "..tMembers.NAM); return nil end
-    end; return anyVal
+    local sTyp = tostring(envMember[4] or ""); if(sTyp == "") then
+      envPrint(envAddon.."envGetConvarValue: Mode missing"); return nil end
+    local anyVal = envGetConvarType(oVar, sTyp, sNam); if(not anyVal) then
+      envPrint(envAddon.."envGetConvarValue: Missed type <"..sTyp.."> for <"..sNam.."> in "..tMembers.NAM); return nil end
+    return anyVal
   end
 
   local function envCreateMemberConvars(tMembers)
@@ -62,17 +53,30 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     end
   end
 
+  local function envValidateConvar(envValue, envMember)
+    local sType = tostring(envMember[4] or ""); if(sType == "") then
+      envPrint(envAddon.."envApplyLimit: Type missing for <"..tostring(envMember[4])..">"); return nil end
+    if(sType == "float" or sType == "int") then
+      local envLimit = tostring(envMember[5] or ""); if(envLimit == "") then return envValue end
+      if(envLimit == "+"  and envValue and envValue >  0) then return envValue else return nil end
+      if(envLimit == "0+" and envValue and envValue >= 0) then return envValue else return nil end
+      if(envLimit == "-"  and envValue and envValue <  0) then return envValue else return nil end
+      if(envLimit == "0-" and envValue and envValue <= 0) then return envValue else return nil end
+      envPrint(envAddon.."envApplyLimit: Limit <"..envLimit.."> mismatched")
+    else return envValue end
+  end
+
   local function envLoadMemberValues(tMembers)
     for ID = 1, #tMembers, 1 do
       local envMember  = tMembers[ID]
-      if(envMember[3] ~= nil) then
-        local envValue = envGetConvarValue(envMember[1], envMember[4], tMembers, ID)
-        tMembers.NEW[envMember[3]] = ((envValue > 0) and envValue or 0)
-        if(envValue and envValue > 0) then tMembers.NEW = envValue else tMembers.NEW = tMembers.OLD end
-        envPrint(tMembers.NAM.."."..envMember[3], tMembers.OLD[envMember[2]], tMembers.NEW[envMember[2]])
+      local envKeyID   = envMember[3]
+      if(envKeyID ~= nil) then
+        local envValue = envValidateConvar(envGetConvarValue(envMember), envMember)
+        if(envValue) then tMembers.NEW[envKeyID] = envValue else tMembers.NEW[envKeyID] = tMembers.OLD[envKeyID] end
+        envPrint(tMembers.NAM.."."..envKeyID, tMembers.OLD[envKeyID], tMembers.NEW[envKeyID])
       else -- Scalar, non-table value
-        local envValue = envGetConvarValue(envMember[1], envMember[4], tMembers, ID)
-        if(envValue and envValue > 0) then tMembers.NEW = envValue else tMembers.NEW = tMembers.OLD end
+        local envValue = envValidateConvar(envGetConvarValue(envMember), envMember)
+        if(envValue) then tMembers.NEW = envValue else tMembers.NEW = tMembers.OLD end
         envPrint(tMembers.NAM, tMembers.OLD, tMembers.NEW)
       end
     end
@@ -82,18 +86,18 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     local Out = (tMembers.NAM.."\n")
     for ID = 1, #perfMembers, 1 do
       local envMember = perfMembers[ID]
-      Out = Out.."  "..envMember[3]..": <"..tostring(envGetConvarValue(envMember[1], envMember[4], tMembers, ID))..">\n"
+      Out = Out.."  "..envMember[3]..": <"..tostring(envGetConvarValue(envMember))..">\n"
     end; return (Out.."\n")
   end
 
-  local function envDumpStatus(tMembers, sStatus)
-    local Key = tostring(sStatus or "")
-    if(not (Key == "NEW" or Key == "OLD")) then return end
-    local Out = (tMembers.NAM.."["..Key.."]\n")
+  local function envDumpStatus(tMembers, sKey)
+    local sKey = tostring(sKey or "")
+    if(not (sKey == "NEW" or sKey == "OLD")) then return end
+    local Out = (tMembers.NAM.."["..sKey.."]\n")
     for ID = 1, #tMembers, 1 do
       local envMember = tMembers[ID]
       local envDatakv = envMember[3]
-      Out = Out.."  "..envDatakv..": <"..tostring(tMembers[Key][envDatakv])..">\n"
+      Out = Out.."  "..envDatakv..": <"..tostring(tMembers[sKey][envDatakv])..">\n"
     end; return (Out.."\n")
   end
 
@@ -107,28 +111,28 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
   -- https://wiki.garrysmod.com/page/Category:number
   local airMembers = { -- INITIALIZE AIR DENSITY
     NAM = "envSetAirDensity", OLD = physenv.GetAirDensity(), NEW = 0,
-    {"airdensity", "Air density affecting props", nil, "float"}
+    {"airdensity", "Air density affecting props", nil, "float", "+"}
   }; envCreateMemberConvars(airMembers)
 
   -- https://wiki.garrysmod.com/page/Category:Vector
   local gravMembers = { -- INITIALIZE GRAVITY
     NAM = "envSetGravity", OLD = physenv.GetGravity(), NEW = Vector(),
-    {"gravitydrx", "Component X of the gravity affecting props", "x", "float"},
-    {"gravitydry", "Component Y of the gravity affecting props", "y", "float"},
-    {"gravitydrz", "Component Z of the gravity affecting props", "z", "float"}
+    {"gravitydrx", "Component X of the gravity affecting props", "x", "float", nil},
+    {"gravitydry", "Component Y of the gravity affecting props", "y", "float", nil},
+    {"gravitydrz", "Component Z of the gravity affecting props", "z", "float", nil}
   }; envCreateMemberConvars(gravMembers)
 
   -- https://wiki.garrysmod.com/page/Category:physenv
   local perfMembers = { -- INITIALIZE ENVIRONMENT SETTINGS
     NAM = "envSetPerformance", OLD = physenv.GetPerformanceSettings(), NEW = {},
-    {"perfmaxangvel", "Maximum rotation velocity"                                        , "MaxAngularVelocity"               , "float"},
-    {"perfmaxlinvel", "Maximum speed of an object"                                       , "MaxVelocity"                      , "float"},
-    {"perfminfrmass", "Minimum mass of an object to be affected by friction"             , "MinFrictionMass"                  , "float"},
-    {"perfmaxfrmass", "Maximum mass of an object to be affected by friction"             , "MaxFrictionMass"                  , "float"},
-    {"perflooktmovo", "Maximum amount of seconds to precalculate collisions with objects", "LookAheadTimeObjectsVsObject"     , "float"},
-    {"perflooktmovw", "Maximum amount of seconds to precalculate collisions with world"  , "LookAheadTimeObjectsVsWorld"      , "float"},
-    {"perfmaxcolchk", "Maximum collision checks per tick"                                , "MaxCollisionChecksPerTimestep"    , "float"},
-    {"perfmaxcolobj", "Maximum collision per object per tick"                            , "MaxCollisionsPerObjectPerTimestep", "float"}
+    {"perfmaxangvel", "Maximum rotation velocity"                                        , "MaxAngularVelocity"               , "float", "+"},
+    {"perfmaxlinvel", "Maximum speed of an object"                                       , "MaxVelocity"                      , "float", "+"},
+    {"perfminfrmass", "Minimum mass of an object to be affected by friction"             , "MinFrictionMass"                  , "float", "+"},
+    {"perfmaxfrmass", "Maximum mass of an object to be affected by friction"             , "MaxFrictionMass"                  , "float", "+"},
+    {"perflooktmovo", "Maximum amount of seconds to precalculate collisions with objects", "LookAheadTimeObjectsVsObject"     , "float", "+"},
+    {"perflooktmovw", "Maximum amount of seconds to precalculate collisions with world"  , "LookAheadTimeObjectsVsWorld"      , "float", "+"},
+    {"perfmaxcolchk", "Maximum collision checks per tick"                                , "MaxCollisionChecksPerTimestep"    , "float", "+"},
+    {"perfmaxcolobj", "Maximum collision per object per tick"                            , "MaxCollisionsPerObjectPerTimestep", "float", "+"}
   }; envCreateMemberConvars(perfMembers)
 
   -- LOGGING
