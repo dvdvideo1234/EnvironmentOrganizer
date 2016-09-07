@@ -13,24 +13,24 @@ A: Remember the following tweak when building an engine
    This addon is here to meke it run automatically on startup when enabled based on user-defined settings.
    My life was going to be much easier back then when I recorded: https://www.youtube.com/watch?v=herJj_aRJvY
 
-Q: How can I use this thing ?
+Q: How can I use this script ?
 A: Whenever you change a console variable, a callback for the environment settings adjustment will be triggered,
-   which will reload all the settings for the related member into the server "NEW" environment. If you do agree
+   which will reload all the settings for the related member into the server "USER" environment. If you do agree
    with this change you can call a user command to apply it, usually one of the following prefixed "envorganiser_" of course.
-     Syntax: "envorganiser_<adjuster-member> <store-container>" ( For example: "envorganiser_setairdensity NEW")
+     Syntax: "envorganiser_<adjuster-member> <store-container>" ( For example: "envorganiser_setairdensity USER")
    Value <adjuster-member> must be one of the following:
      setairdensity  --> Applies the air density environment setting
      setgravity     --> Applies the gravity environment setting
      setperformance --> Applies the performance environment settings
-   Value <store-container> must be either "NEW" or "OLD".
-     When "NEW" is selected, the script adjusts the environment settings directly form the values of the console
+   Value <store-container> must be either "USER" or "INIT".
+     When "USER" is selected, the script adjusts the environment settings directly form the values of the console
        variables dedicated to that member ( For the example above it will load console variable
        "envorganiser_airdensity" into the environment).
-     When "OLD" is selected, the script adjusts the environment settings from the stored values
+     When "INIT" is selected, the script adjusts the environment settings from the stored values
        taken during initialization. This option represents a base/initial/default setting that stores the
        original values, so the user can switch between the server defaults and the personal ones on demand.
 
-Q: So what custom environment variables were included ?
+Q: So which custom environment variables were included ?
 A: Here they are, prefixed with "envorganiser_" of course:
    Member: envSetAirDensity: https://wiki.garrysmod.com/page/Category:number
      airdensity --> The air density of the server
@@ -48,15 +48,34 @@ A: Here they are, prefixed with "envorganiser_" of course:
      perfmaxcolchk --> Maximum collision checks per tick
      perfmaxcolobj --> Maximum collision per object per tick
 
+Q: How can I save my custom settings to a file so everytime when Gmod loads, it reads it?
+A: First the envorganiser_hashvar is set to "USER". You have to adjust all the convars in
+   "So which custom environment variables were included ?" ( Above ! ) to the desired values for your server,
+   then use the <adjuster-member> commands to update the current settings. After you are done, they become
+   final as the game is currently using them. You must use "envorganiser_storevalues <cutom-name>". The
+   <cutom-name> parameter can be anything. For example "envorganiser_storevalues cupcake" will store all
+   the current environment settings used in files, located in "envorganiser/" ( grouped by "cupcake" of course )
+   If you want to change these, just edit the files related with your <cutom-name> ( cupcake ). Do not worry
+   about the cvar spacers. You can use tabs, spaces, or both mixed, so you can align the values one under another
+   as you prefer. After you are done with all your changes, you must make the script load your custom settings
+   from that file by setting "envorganiser_hashvar #<cutom-name>" ( For the example above "envorganiser_hashvar #cupcake"
+   And yes I am a brony xD ). The hashtag command can be translated to: "When envorganiser_hashvar is created assign to
+   it <load-file>cupcake" where <load-file> is "#" Done. Now the settings will be loaded form the file chosen
+   ( Example file: envorganiser/<adjuster-member>_cupcake.txt under "DATA")
+
 Q: Does this organiser has any fail-safe features ?
 A: Yes it does.
+   Envoronmet settings must be managed by a player, who is admin,
+     otherwise the environment will not be modified.
+   When loading saving setting to external custom file, <cutom-name> is checked for alphanumeric,
+     otherwise nothing will be exported
    A member's value for the environment setting is only set when positive number is given,
-     otherwise the "OLD" ( default/fail-safe ) value is loaded.
+     otherwise the "INIT" ( default/fail-safe ) value is loaded.
    The console commands check for a correct storage key and does not apply the settings when the key
-     is not either "NEW" or "OLD", defining the storage location the values will be taken from.
-     
+     is not either "USER" or "INIT", defining the storage location the values will be taken from.
+
 Q: May I pit this thing to a third-party website ?
 A: No ! I will never give you my permission to upload this into third-party websites !
-   Instead of doing stupid things, and confuse everbody with your actions, just put a link
-   leading to this repository there in a comment. That was not so hard was it !
+   Instead of doing stupid things, and confuse everybody with your actions, forcing them to use a malicious copy
+   of this script, just put a link leading to this repository there in a comment. That was not so hard was it !
 ```
