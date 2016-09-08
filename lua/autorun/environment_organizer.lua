@@ -70,9 +70,17 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
 
   local function envCreateMemberConvars(tMembers)
     local envList = tMembers.List
+    -- print(tMembers.Name, #tMembers)
     for ID = 1, #tMembers, 1 do
       local envMember = tMembers[ID]
-      CreateConVar(envPrefx..envMember[1], envList["INIT"][ID], envFvars, envMember[2])
+      local envKeyID  = envMember[3]
+      -- print("Key, Member = ", tostring(envKeyID), tostring(envMember[1]))
+      if(envKeyID ~= nil) then
+        CreateConVar(envPrefx..envMember[1], tostring(envList["INIT"][envKeyID]), envFvars, envMember[2])
+      else -- Scalar value
+        -- print(ID, "CreateConVar("..envPrefx..tostring(envMember[1])..", "..tostring(envList["INIT"])..", "..tostring(envFvars)..", "..tostring(envMember[2])..")")
+        CreateConVar(envPrefx..envMember[1], tostring(envList["INIT"]), envFvars, envMember[2])
+      end
     end
   end
 
@@ -93,10 +101,10 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
   local function envLoadMemberValues(tMembers)
     if(not tMembers) then
       envPrint(envAddon.."envLoadMemberValues: Members missing"); return nil end
+    local envList = tMembers.List
     for ID = 1, #tMembers, 1 do
       local envMember = tMembers[ID]
       local envKeyID  = envMember[3]
-      local envList   = tMembers.List
       if(not envList) then
         envPrint(envAddon.."envLoadMemberValues: Members list missing"); return nil end
       if(envKeyID ~= nil) then
@@ -140,7 +148,12 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
   local function envAddCallBacks(tMembers, fCall)
     for ID = 1, #tMembers, 1 do
       local envMember = tMembers[ID]
-      cvars.AddChangeCallback(envPrefx..envMember[1], fCall, tMembers.Name.."_"..envMember[3])
+      local envKeyID  = envMember[3]
+      if(envKeyID ~= nil) then
+        cvars.AddChangeCallback(envPrefx..envMember[1], fCall, tMembers.Name.."_"..envMember[3])
+      else
+        cvars.AddChangeCallback(envPrefx..envMember[1], fCall, tMembers.Name)
+      end
     end
   end
 
@@ -150,7 +163,7 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     local sValue = tostring(sValue or "")
     for ID = 1, #tMembers, 1 do
       local envMember = tMembers[ID]
-      if(sValue == envMember[1])) then return ID end
+      if(sValue == envMember[1]) then return ID end
     end; return 0
   end
 
@@ -189,7 +202,7 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
     local envList = tMembers.List
     if(not envList) then
       envPrint(envAddon.."envLoadCustom: Members list missing"); return nil end
-    if(not file.Exists(envDir,"DATA")) then envPrint(envAddon..) end
+    if(not file.Exists(envDir,"DATA")) then file.CreateDir(envDir) end
     local sName = envDir..tMembers.Name.."_"..sStore..".txt"
     local fStore = file.Open(sName, "r", "DATA" )
     if(not fStore) then envPrint(envAddon.."envLoadCustom: file.Open("..sName..") Failed") end
@@ -206,7 +219,7 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
         tBoom = string.Explode(envDiv,sLine)
         if(tBoom and tBoom[1] and tBoom[2]) then
           local ID = envFindMenberID(tMembers, tBoom[1])
-          if(ID and ID > 0)
+          if(ID and ID > 0) then
             local envMember = tMembers[ID]
             local envValue  = envValidateMember(envMember, tBoom[2])
             local envKeyID  = envMember[3]
@@ -256,45 +269,54 @@ if(GetConVar(envPrefx.."enabled"):GetBool()) then
   end
 
   function envSetAirDensity(oPly,oCom,oArgs) -- Sets the air density on proper key
-    if(not envMayPlayer(oPly)) then envPrint(envAddon.."envSetAirDensity: "..oPly:Nick().." not admin"); return nil end
     local Key = string.upper(tostring((type(oArgs) == "table") and oArgs[1] or ""))
     local Len = string.len(envFile)
     if(airMembers.List[Key]) then
       envLoadMemberValues(airMembers)
+      if(not envMayPlayer(oPly)) then
+        envPrint(envAddon.."envSetPerformance: Player forbidden"); return nil end
       physenv.SetAirDensity(airMembers.List[Key])
     elseif(string.sub(Key,1,Len) == envFile) then
       envLoadCustom(airMembers,string.sub(Key,1+Len,-1))
+      if(not envMayPlayer(oPly)) then
+        envPrint(envAddon.."envSetPerformance: Player forbidden"); return nil end
       physenv.SetAirDensity(airMembers.List["USER"])
     else envPrint(envAddon.."envSetAirDensity: Missed key <"..Key..">"); return end
   end
 
   function envSetGravity(oPly,oCom,oArgs) -- Sets the gravity on proper key
-    if(not envMayPlayer(oPly)) then envPrint(envAddon.."envSetGravity: "..oPly:Nick().." not admin"); return nil end
     local Key = string.upper(tostring((type(oArgs) == "table") and oArgs[1] or ""))
     local Len = string.len(envFile)
     if(gravMembers.List[Key]) then
       envLoadMemberValues(gravMembers)
+      if(not envMayPlayer(oPly)) then
+        envPrint(envAddon.."envSetPerformance: Player forbidden"); return nil end
       physenv.SetGravity(gravMembers.List[Key])
     elseif(string.sub(Key,1,Len) == envFile) then
       envLoadCustom(gravMembers,string.sub(Key,1+Len,-1))
+      if(not envMayPlayer(oPly)) then
+        envPrint(envAddon.."envSetPerformance: Player forbidden"); return nil end
       physenv.SetGravity(gravMembers.List["USER"])
     else envPrint(envAddon.."envSetGravity: Missed key <"..Key..">"); return end
   end
 
   function envSetPerformance(oPly,oCom,oArgs) -- Sets the performance on proper key
-    if(not envMayPlayer(oPly)) then envPrint(envAddon.."envSetPerformance: "..oPly:Nick().." not admin"); return nil end
     local Key = string.upper(tostring((type(oArgs) == "table") and oArgs[1] or ""))
     local Len = string.len(envFile)
     if(perfMembers.List[Key]) then
       envLoadMemberValues(perfMembers)
+      if(not envMayPlayer(oPly)) then
+        envPrint(envAddon.."envSetPerformance: Player forbidden"); return nil end
       physenv.SetPerformanceSettings(perfMembers.List[Key])
     elseif(string.sub(Key,1,Len) == envFile) then
       envLoadCustom(perfMembers,string.sub(Key,1+Len,-1))
+      if(not envMayPlayer(oPly)) then
+        envPrint(envAddon.."envSetPerformance: Player forbidden"); return nil end
       physenv.SetPerformanceSettings(perfMembers.List["USER"])
     else envPrint(envAddon.."envSetPerformance: Missed key <"..Key..">"); return end
   end
 
-  function envDumpConvarValues() -- The values in the convars. Does not affect user key
+  function envDumpConvarValues(oPly,oCom,oArgs) -- The values in the convars. Does not affect user key
     if(not envMayPlayer(oPly)) then envPrint(envAddon.."envDumpConvarValues: "..oPly:Nick().." not admin"); return nil end
     envPrint(envDumpConvars(airMembers)..envDumpConvars(gravMembers)..envDumpConvars(perfMembers))
   end
