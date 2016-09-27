@@ -1,0 +1,8 @@
+perfmaxangvel 3636.3637695313
+perfmaxlinvel 6000000
+perfminfrmass 10
+perfmaxfrmass 2500
+perflooktmovo 0.5
+perflooktmovw 1
+perfmaxcolchk 50000
+perfmaxcolobj 10

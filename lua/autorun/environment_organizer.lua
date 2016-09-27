@@ -17,8 +17,8 @@ local enLog    = false            -- Flag for enabling the logs
 local envFile  = "#"              -- File load prefix ( setgravity #propfly loads propfly file )
 local envDiv   = " "              -- File storage delimiter
 local envIdnt  = "  "             -- key-value pair indent on printing
-local envDir   = "envorganiser/"  -- Place where external storage data files are saved ( if any )
-local envPrefx = "envorganiser_"  -- Prefix to create variavles with
+local envDir   = "envorganizer/"  -- Place where external storage data files are saved ( if any )
+local envPrefx = "envorganizer_"  -- Prefix to create variavles with
 local envAddon = "envOrganizer: " -- Logging indicatior to view the source addon
 local hashVar  = "init"           -- Default values source to be loaded ( default game environment settings )
 local envFvars = bit.bor(FCVAR_ARCHIVE, FCVAR_ARCHIVE_XBOX, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_PRINTABLEONLY)
@@ -45,17 +45,17 @@ if(SERVER) then
       envPrint("envValidateParams: Members list missing for "..tMembers.Name); return false end
     if(not envCtrl["get"]) then
       envPrint("envValidateParams: Get control missing for "..tMembers.Name); return false end
-    if(type(envCtrl["get"]) ~= "finction") then
-      envPrint("envValidateParams: Get control not function "..tMembers.Name); return false end
+    if(type(envCtrl["get"]) ~= "function") then
+      envPrint("envValidateParams: Get control not function but <"..type(envCtrl["get"]).."> "..tMembers.Name); return false end
     if(not envCtrl["set"]) then
       envPrint("envValidateParams: Set control missing for "..tMembers.Name); return false end
-    if(type(envCtrl["set"]) ~= "finction") then
-      envPrint("envValidateParams: Set control not function "..tMembers.Name); return false end
+    if(type(envCtrl["set"]) ~= "function") then
+      envPrint("envValidateParams: Set control not function but <"..type(envCtrl["get"]).."> "..tMembers.Name); return false end
     return true
   end
 
-  local envValidateListItems(tMembers, tKeys)
-    if(not envValidateParams(tMembers))
+  local function envValidateListItems(tMembers, tKeys)
+    if(not envValidateParams(tMembers)) then
       envPrint("envValidateListItems: Members invalid"); return false end
     if(type(tKeys) ~= "table") then
       envPrint("envValidateListItems: Keys <"..type(tKeys).."> mismatch for "..tMembers.Name); return false end
@@ -64,6 +64,7 @@ if(SERVER) then
     while(tKeys[iCnt]) do
       if(not envList[tKeys[iCnt]]) then
         envPrint("envValidateListItems: List["..tostring(tKeys[iCnt]).."] item <"..tostring(iCnt).."> missing for "..tMembers.Name); return false end
+        iCnt = iCnt + 1
     end; return true
   end
 
@@ -386,17 +387,15 @@ if(SERVER) then
 
       function envDumpConvarValues(oPly,oCom,oArgs) -- The values in the convars. Does not affect user key
         if(not envMayPlayer(oPly)) then envPrint("envDumpConvarValues: "..oPly:Nick().." not admin"); return nil end
-        envPrint("envDumpConvarValues:\n"..tostring(envDumpConvars(airMembers ))
-                                         ..tostring(envDumpConvars(gravMembers))
-                                         ..tostring(envDumpConvars(perfMembers)))
+        print("envDumpConvarValues: Source <"..GetConVar(envPrefx.."hashvar"):GetString().."> ["..hashVar.."]\n"
+          ..tostring(envDumpConvars(airMembers ))..tostring(envDumpConvars(gravMembers))..tostring(envDumpConvars(perfMembers)))
       end
 
       function envDumpStatusValues(oPly,oCom,oArgs) -- Dumps whatever is found under the given key
         if(not envMayPlayer(oPly)) then envPrint("envDumpStatusValues: "..oPly:Nick().." not admin"); return nil end
         local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
-        envPrint("envDumpStatusValues:\n"..tostring(envDumpStatus(airMembers ,Key))
-                                          ..tostring(envDumpStatus(gravMembers,Key))
-                                          ..tostring(envDumpStatus(perfMembers,Key)))
+        print("envDumpStatusValues:\n"..tostring(envDumpStatus(airMembers ,Key))
+          ..tostring(envDumpStatus(gravMembers,Key))..tostring(envDumpStatus(perfMembers,Key)))
       end
 
       function envLogRefresh(oPly,oCom,oArgs) -- Dumps whatever is found under the given key

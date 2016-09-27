@@ -1,0 +1,3 @@
+gravitydrx 0
+gravitydry 0
+gravitydrz -600
