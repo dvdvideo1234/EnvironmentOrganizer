@@ -41,19 +41,37 @@ if(SERVER) then
     if(not tMembers.Name) then
       envPrint("envValidateParams: Members name missing"); return false end
     tMembers.Name = tostring(tMembers.Name)
-    local envList = tMembers.List
-    if(not envList) then
+    local envCtrl = tMembers.Ctrl; if(type(envCtrl) ~= "table") then
       envPrint("envValidateParams: Members list missing for "..tMembers.Name); return false end
-    if(not envList["user"]) then
-      envPrint("envValidateParams: Members user list missing for "..tMembers.Name); return false end
-    if(not envList["init"]) then
-      envPrint("envValidateParams: Members init list missing for "..tMembers.Name); return false end
+    if(not envCtrl["get"]) then
+      envPrint("envValidateParams: Get control missing for "..tMembers.Name); return false end
+    if(type(envCtrl["get"]) ~= "finction") then
+      envPrint("envValidateParams: Get control not function "..tMembers.Name); return false end
+    if(not envCtrl["set"]) then
+      envPrint("envValidateParams: Set control missing for "..tMembers.Name); return false end
+    if(type(envCtrl["set"]) ~= "finction") then
+      envPrint("envValidateParams: Set control not function "..tMembers.Name); return false end
     return true
+  end
+
+  local envValidateListItems(tMembers, tKeys)
+    if(not envValidateParams(tMembers))
+      envPrint("envValidateListItems: Members invalid"); return false end
+    if(type(tKeys) ~= "table") then
+      envPrint("envValidateListItems: Keys <"..type(tKeys).."> mismatch for "..tMembers.Name); return false end
+    local iCnt, envList = 1, tMembers.List; if(type(envList) ~= "table") then
+      envPrint("envValidateListItems: List <"..type(envList).."> mismatch for "..tMembers.Name); return false end
+    while(tKeys[iCnt]) do
+      if(not envList[tKeys[iCnt]]) then
+        envPrint("envValidateListItems: List["..tostring(tKeys[iCnt]).."] item <"..tostring(iCnt).."> missing for "..tMembers.Name); return false end
+    end; return true
   end
 
   local function envCreateMemberConvars(tMembers)
     if(not envValidateParams(tMembers)) then
       envPrint("envCreateMemberConvars: Members invalid"); return nil end
+    if(not envValidateListItems(tMembers, {"init"})) then
+      envPrint("envCreateMemberConvars: List invalid"); return nil end
     local envList = tMembers.List
     for ID = 1, #tMembers, 1 do
       local envMember = tMembers[ID]
@@ -69,25 +87,27 @@ if(SERVER) then
   end
 
   local function envInitMembers(tMembers)
-    if(not (type(tMembers) == "table")) then envPrint("envInitMembers: Members invalid"); return nil end
-    local envList = tMembers.List
-    local envFunc = envList["func"]
-    if((type(envFunc) ~= "function") or (type(envList) ~= "table")) then
-      envPrint("envInitMembers: Init function invalid for "..tMembers.Name); return nil end
-    envList["init"] = envFunc(); envPrint("envInitMembers: Init "..tMembers.Name.." success")
+    if(not envValidateParams(tMembers)) then
+      envPrint("envInitMembers: Members invalid"); return nil end
+    if(not envValidateListItems(tMembers, {"user"})) then
+      envPrint("envInitMembers: List invalid"); return nil end
+    tMembers.List["init"] = tMembers.Ctrl["get"]()
+    envPrint("envInitMembers: Init "..tMembers.Name.." success")
   end
 
   -- https://wiki.garrysmod.com/page/Category:number
   local airMembers = { -- AIR DENSITY
     Name = "envSetAirDensity",
-    List = {["func"] = physenv.GetAirDensity, ["user"] = 0},
+    List = {["user"] = 0},
+    Ctrl = {["get"] = physenv.GetAirDensity, ["set"] = physenv.SetAirDensity},
     {"airdensity", "Air density affecting props", nil, "float", "+"}
   }
 
   -- https://wiki.garrysmod.com/page/Category:Vector
   local gravMembers = { -- GRAVITY
     Name = "envSetGravity",
-    List = {["func"] = physenv.GetGravity, ["user"] = Vector()},
+    List = {["user"] = Vector()},
+    Ctrl = {["get"] = physenv.GetGravity, ["set"] = physenv.SetGravity},
     {"gravitydrx", "Component X of the gravity affecting props", "x", "float", nil},
     {"gravitydry", "Component Y of the gravity affecting props", "y", "float", nil},
     {"gravitydrz", "Component Z of the gravity affecting props", "z", "float", nil}
@@ -96,7 +116,8 @@ if(SERVER) then
   -- https://wiki.garrysmod.com/page/Category:physenv
   local perfMembers = { -- PERFORMANCE SETTINGS
     Name = "envSetPerformance",
-    List = {["func"] = physenv.GetPerformanceSettings, ["user"] = {}},
+    List = {["user"] = {}},
+    Ctrl = {["get"] = physenv.GetPerformanceSettings, ["set"] = physenv.SetPerformanceSettings},
     {"perfmaxangvel", "Maximum rotation velocity"                                        , "MaxAngularVelocity"               , "float", "+"},
     {"perfmaxlinvel", "Maximum speed of an object"                                       , "MaxVelocity"                      , "float", "+"},
     {"perfminfrmass", "Minimum mass of an object to be affected by friction"             , "MinFrictionMass"                  , "float", "+"},
@@ -177,6 +198,8 @@ if(SERVER) then
       local function envLoadMemberValues(tMembers)
         if(not envValidateParams(tMembers)) then
           envPrint("envLoadMemberValues: Members missing"); return nil end
+        if(not envValidateListItems(tMembers, {"init", "user"})) then
+          envPrint("envLoadMemberValues: List invalid"); return nil end
         local envList = tMembers.List
         for ID = 1, #tMembers, 1 do
           local envMember = tMembers[ID]
@@ -197,7 +220,7 @@ if(SERVER) then
 
       local function envDumpConvars(tMembers)
         if(not envValidateParams(tMembers)) then
-          envPrint("envDumpStatus: No mebers"); return nil end
+          envPrint("envDumpStatus: Members invalid"); return nil end
         local Out = envIdnt..tMembers.Name.."\n"
         for ID = 1, #tMembers, 1 do
           local envMember = tMembers[ID]
@@ -215,8 +238,8 @@ if(SERVER) then
           envPrint("envDumpStatus: Members invalid"); return nil end
         local sKey = tostring(sKey or ""); if(not sKey or sKey == "") then
           envPrint("envDumpStatus: List key not provided"); return nil end
-        if(not tMembers.List[sKey]) then
-          envPrint("envDumpStatus: Key not found <"..sKey..">"); return nil end
+        if(not envValidateListItems(tMembers, {sKey})) then
+          envPrint("envDumpStatus: List invalid"); return nil end
         local envList = tMembers.List
         local Out = envIdnt..tMembers.Name.."["..sKey.."]\n"
         for ID = 1, #tMembers, 1 do
@@ -256,17 +279,19 @@ if(SERVER) then
         end; return 0
       end
 
-      local function envStoreCustom(tMembers, sStore)
+      local function envStoreMemberCustom(tMembers, sStore)
         if(not envValidateParams(tMembers)) then
-          envPrint("envStoreCustom: Members invalid"); return nil end
+          envPrint("envStoreMemberCustom: Members invalid"); return nil end
         local sStore = tostring(sStore or "")
         if(not envIsAplphaNum(sStore)) then
-          envPrint("envStoreCustom: Store key mismatch <"..sStore..">"); return nil end
+          envPrint("envStoreMemberCustom: Store key mismatch <"..sStore..">"); return nil end
+        if(not envValidateListItems(tMembers, {"user"})) then
+          envPrint("envStoreMemberCustom: List invalid"); return nil end
         local envList = tMembers.List
         if(not file.Exists(envDir,"DATA")) then file.CreateDir(envDir) end
         local sName  = envDir..sStore.."_"..tMembers.Name..".txt"
         local fStore = file.Open(sName, "w", "DATA" )
-        if(not fStore) then envPrint("envStoreCustom: file.Open("..sName..") Failed") end
+        if(not fStore) then envPrint("envStoreMemberCustom: file.Open("..sName..") Failed") end
         for ID = 1, #tMembers, 1 do
           local envMember = tMembers[ID]
           local envKeyID  = envMember[3]
@@ -280,18 +305,20 @@ if(SERVER) then
         fStore:Close()
       end
 
-      local function envLoadCustom(tMembers, sStore)
+      local function envLoadMemberCustom(tMembers, sStore)
         if(not envValidateParams(tMembers)) then
-          envPrint("envLoadCustom: Members invalid"); return nil end
+          envPrint("envLoadMemberCustom: Members invalid"); return nil end
         local sStore = tostring(sStore or "")
         if(not envIsAplphaNum(sStore)) then
-          envPrint("envLoadCustom: Store key mismatch <"..sStore..">"); return nil end
+          envPrint("envLoadMemberCustom: Store key mismatch <"..sStore..">"); return nil end
+        if(not envValidateListItems(tMembers, {"init", "user"})) then
+          envPrint("envLoadMemberCustom: List invalid"); return nil end
         local envList = tMembers.List
         if(not file.Exists(envDir,"DATA")) then
-          envPrint("envLoadCustom: Path invalid <data/"..envDir..">"); end
+          envPrint("envLoadMemberCustom: Path invalid <data/"..envDir..">"); end
         local sName  = envDir..sStore.."_"..tMembers.Name..".txt"
         local fStore = file.Open(sName, "r", "DATA" )
-        if(not fStore) then envPrint("envLoadCustom: file.Open("..sName..") Failed") end
+        if(not fStore) then envPrint("envLoadMemberCustom: file.Open("..sName..") Failed") end
         local sLine, sChar, nLen = "", "X", 0
         while(sChar) do
           sChar = fStore:Read(1)
@@ -314,8 +341,8 @@ if(SERVER) then
                 else
                   envList["user"] = envValue and envValue or envList["init"]
                 end
-              else envPrint("envLoadCustom: Failed to find <"..tostring(tBoom[1]).."> in "..tMembers.Name) end
-            else envPrint("envLoadCustom: Failed to explode <"..sLine..">") end; sLine = ""
+              else envPrint("envLoadMemberCustom: Failed to find <"..tostring(tBoom[1]).."> in "..tMembers.Name) end
+            else envPrint("envLoadMemberCustom: Failed to explode <"..sLine..">") end; sLine = ""
           else sLine = sLine..sChar end
         end; fStore:Close()
       end
@@ -325,19 +352,23 @@ if(SERVER) then
       end
 
       local function envApplyMembers(tMembers, oArgs)
-        local Key = string.lower(tostring((type(oArgs) == "table") and oArgs[1] or ""))
-        local Len = string.len(envFile)
         if(not envValidateParams(tMembers)) then
           envPrint("envApplyMembers: Members invalid"); return nil end
-        local envList = tMembers.List
+        local Key = string.lower(tostring((type(oArgs) == "table") and oArgs[1] or ""))
+        local Len = string.len(envFile)
+        local envList, envCtrl = tMembers.List, tMembers.Ctrl
         if(envList[Key]) then
-          envPrint("envApplyMembers: Source user")
+        if(not envValidateListItems(tMembers, {Key})) then
+          envPrint("envApplyMembers: List invalid (cvar)"); return nil end
+          envPrint("envApplyMembers: Source list <"..Key..">")
           envLoadMemberValues(tMembers)
-          envList["func"](tMembers.List[Key])
+          envCtrl["set"](tMembers.List[Key])
         elseif(string.sub(Key,1,Len) == envFile) then
+        if(not envValidateListItems(tMembers, {"user"})) then
+          envPrint("envApplyMembers: List invalid (file)"); return nil end
           envPrint("envApplyMembers: Source file <"..string.gsub(Key,envFile,"")..">")
-          envLoadCustom(tMembers,string.sub(Key,1+Len,-1))
-          envList["func"](tMembers.List["user"])
+          envLoadMemberCustom(tMembers,string.sub(Key,1+Len,-1))
+          envCtrl["set"](tMembers.List["user"])
         else envPrint("envApplyMembers: Missed source <"..Key..">"); return end
       end
 
@@ -380,9 +411,9 @@ if(SERVER) then
         local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
         if(not envIsAplphaNum(Key)) then
           envPrint("envStoreValues: Key not alphanum <"..Key..">"); return nil end
-        envStoreCustom(airMembers , Key)
-        envStoreCustom(gravMembers, Key)
-        envStoreCustom(perfMembers, Key)
+        envStoreMemberCustom(airMembers , Key)
+        envStoreMemberCustom(gravMembers, Key)
+        envStoreMemberCustom(perfMembers, Key)
         envPrint("envStoreValues: Stored under <"..Key..">")
       end
 
