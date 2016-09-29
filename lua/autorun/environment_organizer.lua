@@ -12,7 +12,6 @@ local string       = string
 local physenv      = physenv
 local concommand   = concommand
 
--- lua_run physenv.SetPerformanceSettings({MaxVelocity = 100000, MaxAngularVelocity = 360000, MaxCollisionsPerObjectPerTimestep = 30, MaxCollisionChecksPerTimestep = 750})
 local enLog    = false            -- Local flag for enabling the logs
 local envFile  = "#"              -- File load prefix ( setgravity #propfly loads "data/envorganizer/propfly_envSetGravity.txt" )
 local envDiv   = " "              -- File storage delimiter
