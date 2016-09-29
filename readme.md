@@ -60,7 +60,7 @@ A: Here they are, prefixed with "envorg_" of course:
      perfmaxcolobj --> Maximum collision per object per tick
 
 Q: How can I save my custom settings to a file so everytime when Gmod loads, it reads it?
-A: First the envorg_hashvar is set to "user". You have to adjust all the convars in
+A: First the envorg_datasrc is set to "user". You have to adjust all the convars in
    "So which custom environment variables were included ?" ( Above ! ) to the desired values for your server,
    then use the <adjuster-member> commands to update the current settings. After you are done, they become
    final as the game is currently using them. You must use "envorg_storevalues <cutom-name>". The
@@ -69,8 +69,8 @@ A: First the envorg_hashvar is set to "user". You have to adjust all the convars
    If you want to change these, just edit the files related with your <cutom-name> ( cupcake ). Do not worry
    about the cvar spacers. You can use tabs, spaces, or both mixed, so you can align the values one under another
    as you prefer. After you are done with all your changes, you must make the script load your custom settings
-   from that file by setting "envorg_hashvar #<cutom-name>" ( For the example above "envorg_hashvar #cupcake"
-   And yes I am a brony xD ). The hashtag command can be translated to: "When envorg_hashvar is created assign to
+   from that file by setting "envorg_datasrc #<cutom-name>" ( For the example above "envorg_datasrc #cupcake"
+   And yes I am a brony xD ). The hashtag command can be translated to: "When envorg_datasrc is created assign to
    it <load-file><cutom-name>" where <load-file> is "#" Done. Now the settings will be loaded form the file chosen on startup
    ( Example file: envorganizer/cupcake_<adjuster-member>.txt under "DATA")
 N: Here is how the exports should look in case you are wondering.

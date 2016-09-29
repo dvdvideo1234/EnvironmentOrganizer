@@ -17,9 +17,9 @@ local envFile  = "#"              -- File load prefix ( setgravity #propfly load
 local envDiv   = " "              -- File storage delimiter
 local envIdnt  = "  "             -- key-value pair indent on printing
 local envDir   = "envorganizer/"  -- Place where external storage data files are saved ( if any )
-local envPreCV = "envorg_"        -- Prefix to create variavles with
+local envPrefx = "envorg_"        -- Prefix to create variavles with
 local envAddon = "envOrganizer: " -- Logging indicatior to view the source addon
-local hashVar  = "init"           -- Default values source to be loaded ( default game environment settings )
+local dataSrc  = "init"           -- Default values source to be loaded ( default game environment settings )
 local envFvars = bit.bor(FCVAR_ARCHIVE, FCVAR_ARCHIVE_XBOX, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_PRINTABLEONLY)
 local envFlogs = bit.bor(FCVAR_ARCHIVE, FCVAR_ARCHIVE_XBOX, FCVAR_NOTIFY, FCVAR_PRINTABLEONLY)
 
@@ -132,10 +132,10 @@ if(SERVER) then
 
     if(GetConVar(envPrefx.."enabled"):GetBool()) then
 
-      CreateConVar(envPrefx.."hashvar", "user", envFvars, "Custom hash settings to be loaded instead")
+      CreateConVar(envPrefx.."datasrc", "user", envFvars, "Custom hash settings to be loaded instead")
 
-      hashVar = GetConVar(envPrefx.."hashvar"):GetString()
-      hashVar = (hashVar ~= "") and hashVar or "init"
+      dataSrc = GetConVar(envPrefx.."datasrc"):GetString()
+      dataSrc = (dataSrc ~= "") and dataSrc or "init"
 
       envInitMembers(airMembers) ; envCreateMemberConvars(airMembers)
       envInitMembers(gravMembers); envCreateMemberConvars(gravMembers)
@@ -386,7 +386,7 @@ if(SERVER) then
 
       function envDumpConvarValues(oPly,oCom,oArgs) -- The values in the convars. Does not affect user key
         if(not envMayPlayer(oPly)) then envPrint("envDumpConvarValues: "..oPly:Nick().." not admin"); return nil end
-        print("envDumpConvarValues: Source <"..GetConVar(envPrefx.."hashvar"):GetString().."> ["..hashVar.."]\n"
+        print("envDumpConvarValues: Source <"..GetConVar(envPrefx.."datasrc"):GetString().."> ["..dataSrc.."]\n"
           ..tostring(envDumpConvars(airMembers ))..tostring(envDumpConvars(gravMembers))..tostring(envDumpConvars(perfMembers)))
       end
 
@@ -428,11 +428,11 @@ if(SERVER) then
       concommand.Add(envPrefx.."storevalues"   ,envStoreValues)
 
       -- Apply the values in the console variables on the server environment
-      envSetAirDensity (nil,nil,{hashVar})
-      envSetGravity    (nil,nil,{hashVar})
-      envSetPerformance(nil,nil,{hashVar})
+      envSetAirDensity (nil,nil,{dataSrc})
+      envSetGravity    (nil,nil,{dataSrc})
+      envSetPerformance(nil,nil,{dataSrc})
 
-      print(envAddon.."Enabled: <"..hashVar..">")
+      print(envAddon.."Enabled: <"..dataSrc..">")
     else
       print(envAddon.."Disabled")
     end
