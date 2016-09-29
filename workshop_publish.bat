@@ -5,7 +5,7 @@
 @echo off
 
 :: Remove the ID in case of creating an addon. Fill it to update
-set AddonMyWorkshopID=
+set AddonMyWorkshopID=771977116
 
 :: Parameterization variables
 set AddonGameBasePath=F:\Games\Steam\steamapps\common\GarrysMod\bin
