@@ -153,7 +153,7 @@ if(SERVER) then
         return true
       end
 
-      local function envIsAplphaNum(sIn)
+      local function envIsAlphaNum(sIn)
         if(string.match(sIn,"%w")) then return true end
         return false
       end
@@ -283,7 +283,7 @@ if(SERVER) then
         if(not envValidateParams(tMembers)) then
           envPrint("envStoreMemberCustom: Members invalid"); return nil end
         local sStore = tostring(sStore or "")
-        if(not envIsAplphaNum(sStore)) then
+        if(not envIsAlphaNum(sStore)) then
           envPrint("envStoreMemberCustom: Store key mismatch <"..sStore..">"); return nil end
         if(not envValidateListItems(tMembers, {"user"})) then
           envPrint("envStoreMemberCustom: List invalid"); return nil end
@@ -309,7 +309,7 @@ if(SERVER) then
         if(not envValidateParams(tMembers)) then
           envPrint("envLoadMemberCustom: Members invalid"); return nil end
         local sStore = tostring(sStore or "")
-        if(not envIsAplphaNum(sStore)) then
+        if(not envIsAlphaNum(sStore)) then
           envPrint("envLoadMemberCustom: Store key mismatch <"..sStore..">"); return nil end
         if(not envValidateListItems(tMembers, {"init", "user"})) then
           envPrint("envLoadMemberCustom: List invalid"); return nil end
@@ -407,7 +407,7 @@ if(SERVER) then
         if(not envMayPlayer(oPly)) then
           envPrint("envStoreValues: "..oPly:Nick().." not admin"); return nil end
         local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
-        if(not envIsAplphaNum(Key)) then
+        if(not envIsAlphaNum(Key)) then
           envPrint("envStoreValues: Key not alphanum <"..Key..">"); return nil end
         envStoreMemberCustom(airMembers , Key)
         envStoreMemberCustom(gravMembers, Key)
