@@ -154,9 +154,7 @@ if(SERVER) then
       end
 
       local function envIsAlphaNum(sIn)
-        if(string.match(sIn,"%w")) then return true end
-        return false
-      end
+        return (string.match(sIn,"[^%w]") == nil) end
 
       local function envGetConvarType(oVar, sTyp) -- Called inside only
         local sTyp = tostring(sTyp or "")
