@@ -18,9 +18,8 @@ local envIdnt  = "  "             -- key-value pair indent on printing
 local envDir   = "envorganizer/"  -- Place where external storage data files are saved ( if any )
 local envPrefx = "envorg_"        -- Prefix to create variavles with
 local envAddon = "envOrganizer: " -- Logging indicatior to view the source addon
-local dataSrc  = "init"           -- Default values source to be loaded ( default game environment settings )
-local envFvars = bit.bor(FCVAR_ARCHIVE, FCVAR_ARCHIVE_XBOX, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_PRINTABLEONLY)
-local envFlogs = bit.bor(FCVAR_ARCHIVE, FCVAR_ARCHIVE_XBOX, FCVAR_NOTIFY, FCVAR_PRINTABLEONLY)
+local envFvars = bit.bor(FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_PRINTABLEONLY)
+local envFlogs = bit.bor(FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_PRINTABLEONLY)
 
 if(SERVER) then
 
@@ -31,12 +30,11 @@ if(SERVER) then
   local function envPrint(...)
     if(not varLogUsed:GetBool()) then return end;
     if(varLogFile:GetBool()) then
-      local sData, tData, nID = "", {...}, 1
+      local tData, nID, sLin = {...}, 1, ""
       while(tData[nID]) do
-        sData = sData..tostring(tData[nID])
-        if(tData[nID+1]) then sData = sData..", " end
-      end
-      file.Append(envDir.."system_log.txt",sData)
+        sLin = sLin..tostring(tData[nID])
+        if(tData[nID+1]) then sLin = sLin.."\t" end; nID = nID + 1
+      end; file.Append(envDir..envPrefx.."log.txt",sLin.."\n")
     else print(envAddon,...) end
   end
 
@@ -83,10 +81,10 @@ if(SERVER) then
       local envMember = tMembers[ID]
       local envKeyID  = envMember[3]
       if(envKeyID ~= nil) then
-        envPrint("envCreateMemberConvars:", envPrefx..envMember[1], tostring(envList["init"][envKeyID]), envMember[2])
+        envPrint("envCreateMemberConvars:",envPrefx..envMember[1],tostring(envList["init"][envKeyID]),envMember[2])
         envMember["var"] = CreateConVar(envPrefx..envMember[1], tostring(envList["init"][envKeyID]), envFvars, envMember[2])
       else -- Scalar value
-        envPrint("envCreateMemberConvars:", envPrefx..envMember[1], tostring(envList["init"]), envMember[2])
+        envPrint("envCreateMemberConvars:",envPrefx..envMember[1],tostring(envList["init"]),envMember[2])
         envMember["var"] = CreateConVar(envPrefx..envMember[1], tostring(envList["init"]), envFvars, envMember[2])
       end
     end
@@ -138,10 +136,13 @@ if(SERVER) then
 
     if(varAddonEn:GetBool()) then
 
-      CreateConVar(envPrefx.."datasrc", "user", envFvars, "Custom hash settings to be loaded instead")
-
-      dataSrc = GetConVar(envPrefx.."datasrc"):GetString()
-      dataSrc = (dataSrc ~= "") and dataSrc or "init"
+      local varDataSrc = CreateConVar(envPrefx.."datasrc", "user", envFvars, "Custom hash settings to be loaded instead")
+      
+      local function envGetDataSource()
+        local dataSrc = varDataSrc:GetString()
+              dataSrc = tostring((dataSrc and (dataSrc ~= "")) and dataSrc or "init")
+        envPrint("envGetDataSource: <"..dataSrc..">"); return dataSrc
+      end
 
       envInitMembers(airMembers) ; envCreateMemberConvars(airMembers)
       envInitMembers(gravMembers); envCreateMemberConvars(gravMembers)
@@ -213,11 +214,11 @@ if(SERVER) then
           if(envKeyID ~= nil) then
             local envValue = envValidateMember(envMember, envGetConvarValue(envMember))
             envList["user"][envKeyID] = envValue and envValue or envList["init"][envKeyID]
-            envPrint("envLoadMemberValues:",tMembers.Name.."."..envKeyID, envList["init"][envKeyID], envList["user"][envKeyID])
+            envPrint("envLoadMemberValues:",tMembers.Name.."."..envKeyID,envList["init"][envKeyID].." > "..envList["user"][envKeyID])
           else -- Scalar, non-table value
             local envValue = envValidateMember(envMember, envGetConvarValue(envMember))
             envList["user"] = envValue and envValue or envList["init"]
-            envPrint("envLoadMemberValues:",tMembers.Name, envList["init"], envList["user"])
+            envPrint("envLoadMemberValues:",tMembers.Name,envList["init"].." > "..envList["user"])
           end
         end
       end
@@ -234,7 +235,7 @@ if(SERVER) then
           else
             Out = Out..envIdnt..envIdnt.."Value : <"..tostring(envGetConvarValue(envMember))..">\n"
           end
-        end; return (Out.."\n")
+        end; return Out
       end
 
       local function envDumpStatus(tMembers, sKey)
@@ -254,7 +255,7 @@ if(SERVER) then
           else
             Out = Out..envIdnt..envIdnt.."Value : <"..tostring(envList[sKey])..">\n"
           end
-        end; return (Out.."\n")
+        end; return Out
       end
 
       local function envAddCallBacks(tMembers, fCall)
@@ -390,15 +391,19 @@ if(SERVER) then
 
       local function envDumpConvarValues(oPly,oCom,oArgs) -- The values in the convars. Does not affect user key
         if(not envMayPlayer(oPly)) then envPrint("envDumpConvarValues: "..oPly:Nick().." not admin"); return nil end
-        print("envDumpConvarValues: Source <"..GetConVar(envPrefx.."datasrc"):GetString().."> ["..dataSrc.."]\n"
-          ..tostring(envDumpConvars(airMembers ))..tostring(envDumpConvars(gravMembers))..tostring(envDumpConvars(perfMembers)))
+        envPrint("envDumpConvarValues: Source <"..envGetDataSource()..">\n")
+        envPrint(envDumpConvars(airMembers ))
+        envPrint(envDumpConvars(gravMembers))
+        envPrint(envDumpConvars(perfMembers))
       end
 
       local function envDumpStatusValues(oPly,oCom,oArgs) -- Dumps whatever is found under the given key
         if(not envMayPlayer(oPly)) then envPrint("envDumpStatusValues: "..oPly:Nick().." not admin"); return nil end
         local Key = tostring((type(oArgs) == "table") and oArgs[1] or "")
-        print("envDumpStatusValues:\n"..tostring(envDumpStatus(airMembers ,Key))
-          ..tostring(envDumpStatus(gravMembers,Key))..tostring(envDumpStatus(perfMembers,Key)))
+        envPrint("envDumpStatusValues:\n")
+        envPrint(envDumpStatus(airMembers ,Key))
+        envPrint(envDumpStatus(gravMembers,Key))
+        envPrint(envDumpStatus(perfMembers,Key))
       end
 
       local function envStoreValues(oPly,oCom,oArgs)
@@ -425,11 +430,11 @@ if(SERVER) then
       concommand.Add(envPrefx.."storevalues"   ,envStoreValues)
 
       -- Apply the values in the console variables on the server environment
-      envSetAirDensity (nil,nil,{dataSrc})
-      envSetGravity    (nil,nil,{dataSrc})
-      envSetPerformance(nil,nil,{dataSrc})
+      envSetAirDensity (nil,nil,{envGetDataSource()})
+      envSetGravity    (nil,nil,{envGetDataSource()})
+      envSetPerformance(nil,nil,{envGetDataSource()})
 
-      print(envAddon.."Enabled: <"..dataSrc..">")
+      print(envAddon.."Enabled: <"..envGetDataSource()..">")
     else
       print(envAddon.."Disabled")
     end
