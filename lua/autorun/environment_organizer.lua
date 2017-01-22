@@ -161,7 +161,7 @@ if(SERVER) then
       end
 
       local function envIsAlphaNum(sIn)
-        return (string.match(sIn,"[^%w]") == nil) end
+        return (sIn:match("[^%w]") == nil) end
 
       local function envGetConvarType(oVar, sTyp) -- Called inside only
         local sTyp = tostring(sTyp or "")
@@ -324,16 +324,14 @@ if(SERVER) then
         local sName  = envDir..sStore.."_"..tMembers.Name..".txt"
         local fStore = file.Open(sName, "r", "DATA" )
         if(not fStore) then envPrint("envLoadMemberCustom: file.Open("..sName..") Failed") end
-        local sLine, sChar, nLen = "", "X", 0
+        local sLine, sChar = "", "X"
         while(sChar) do
           sChar = fStore:Read(1)
           if(not sChar) then return end
-          if(sChar == "\n") then
-            nLen = string.len(sLine)
-            if(string.sub(sLine,nLen,nLen) == "\r") then -- Handle windows format
-              sLine = string.sub(sLine,1,nLen-1); nLen = nLen - 1 end
-            sLine = string.gsub(sLine, "%s+", envDiv) -- All separators to default
-            sLine = string.Trim(sLine, envDiv)
+          if(sChar == "\n") then -- Handle windows format
+            if(sLine:sub(-1,-1) == "\r") then sLine = sLine:sub(1,-2) end
+            sLine = sLine:gsub("%s+", envDiv) -- All separators to default
+            sLine = sLine:Trim(envDiv)
             tBoom = string.Explode(envDiv,sLine)
             if(tBoom and tBoom[1] and tBoom[2]) then
               local ID = envFindMenberID(tMembers, tBoom[1])
@@ -359,8 +357,8 @@ if(SERVER) then
       local function envApplyMembers(tMembers, oArgs)
         if(not envValidateParams(tMembers)) then
           envPrint("envApplyMembers: Members invalid"); return nil end
-        local Key = string.lower(tostring((type(oArgs) == "table") and oArgs[1] or ""))
-        local Len = string.len(envFile)
+        local Key = (tostring((type(oArgs) == "table") and oArgs[1] or "")):lower()
+        local Len = envFile:len()
         local envList, envCtrl = tMembers.List, tMembers.Ctrl
         if(envList[Key]) then
           if(not envValidateListItems(tMembers, {Key})) then
@@ -368,11 +366,11 @@ if(SERVER) then
           envPrint("envApplyMembers: Source list <"..Key..">")
           envLoadMemberValues(tMembers)
           envCtrl["set"](tMembers.List[Key])
-        elseif(string.sub(Key,1,Len) == envFile) then
+        elseif(Key:sub(1,Len) == envFile) then
           if(not envValidateListItems(tMembers, {"user"})) then
             envPrint("envApplyMembers: List <"..Key.."> invalid (file)"); return nil end
-          envPrint("envApplyMembers: Source file <"..string.gsub(Key,envFile,"")..">")
-          envLoadMemberCustom(tMembers,string.sub(Key,1+Len,-1))
+          envPrint("envApplyMembers: Source file <"..Key:gsub(envFile,"")..">")
+          envLoadMemberCustom(tMembers,Key:sub(1+Len,-1))
           envCtrl["set"](tMembers.List["user"])
         else envPrint("envApplyMembers: Missed source <"..Key..">"); return end
       end
