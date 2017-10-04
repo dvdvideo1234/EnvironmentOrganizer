@@ -16,8 +16,8 @@ local envFile  = "#"              -- File load prefix ( setgravity #propfly load
 local envDiv   = " "              -- File storage delimiter
 local envIdnt  = "  "             -- key-value pair indent on printing
 local envDir   = "envorganizer/"  -- Place where external storage data files are saved ( if any )
-local envPrefx = "envorg_"        -- Prefix to create variavles with
-local envAddon = "envOrganizer: " -- Logging indicatior to view the source addon
+local envPrefx = "envorg_"        -- Prefix to create variables with
+local envAddon = "envOrganizer: " -- Logging indicator to view the source addon
 local envFvars = bit.bor(FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_PRINTABLEONLY)
 local envFlogs = bit.bor(FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_PRINTABLEONLY)
 
@@ -332,7 +332,7 @@ if(SERVER) then
             if(sLine:sub(-1,-1) == "\r") then sLine = sLine:sub(1,-2) end
             sLine = sLine:gsub("%s+", envDiv) -- All separators to default
             sLine = sLine:Trim(envDiv)
-            tBoom = string.Explode(envDiv,sLine)
+            tBoom = envDiv:Explode(sLine)
             if(tBoom and tBoom[1] and tBoom[2]) then
               local ID = envFindMenberID(tMembers, tBoom[1])
               if(ID and ID > 0) then
