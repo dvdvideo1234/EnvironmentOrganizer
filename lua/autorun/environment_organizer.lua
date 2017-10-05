@@ -20,6 +20,7 @@ local envPrefx = "envorg_"        -- Prefix to create variables with
 local envAddon = "envOrganizer: " -- Logging indicator to view the source addon
 local envFvars = bit.bor(FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_PRINTABLEONLY)
 local envFlogs = bit.bor(FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_PRINTABLEONLY)
+local envDate  = "%d-%m-%y %H:%M:%S"
 
 if(SERVER) then
 
@@ -29,13 +30,14 @@ if(SERVER) then
 
   local function envPrint(...)
     if(not varLogUsed:GetBool()) then return end;
+    local sDate = " ["..os.date(envDate).."] "
     if(varLogFile:GetBool()) then
       local tData, nID, sLin = {...}, 1, ""
       while(tData[nID]) do
         sLin = sLin..tostring(tData[nID])
         if(tData[nID+1]) then sLin = sLin.."\t" end; nID = nID + 1
-      end; file.Append(envDir..envPrefx.."log.txt",sLin.."\n")
-    else print(envAddon,...) end
+      end; file.Append(envDir..envPrefx.."log.txt",sDate..sLin.."\n")
+    else print(sDate..envAddon,...) end
   end
 
   local function envValidateParams(tMembers)
