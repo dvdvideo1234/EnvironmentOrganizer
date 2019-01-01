@@ -75,13 +75,13 @@ First the `envorg_datasrc` is set to `user`. You have to adjust
 then use the `<adjuster-member>` commands to update the current settings. After you are done, they become
 final as the game is currently using them. You must use `envorg_storevalues <cutom-name>`. The
 `<cutom-name>` parameter can be anything. For example `envorg_storevalues cupcake` will store all
-the current environment settings used in files, located in `envorganizer/` ( grouped by `cupcake` of course )
-If you want to change these, just edit the files related with your `<cutom-name>` ( `cupcake` ). Do not worry
+the current environment settings used in files, located in `envorganizer/` ( grouped by [`cupcake`](https://www.equestriadaily.com/) of course ) If you want to change these, just edit the files related with your `<cutom-name>` ( `cupcake` ). Do not worry
 about the cvar spacers. You can use tabs, spaces, or both mixed, so you can align the values one under another
 as you prefer. After you are done with all your changes, you must make the script load your custom settings
 from that file by setting `envorg_datasrc #<cutom-name>` ( For the example above `envorg_datasrc #cupcake`
-And yes I am a brony xD ). The hash tag command can be translated to: When `envorg_datasrc` is created assign to
-it `<load-file><cutom-name>` where `<load-file>` is `#`. Done! Now the settings will be loaded form the file chosen on startup
+And [yes I am a brony](https://xxnightmaremoonxx.de/vweb/) xD ). The hash tag command can be translated
+to: When `envorg_datasrc` is created assign to it `<load-file><cutom-name>` where `<load-file>` is `#`.
+Done! Now the settings will be loaded form the file chosen on startup
 ( Example file: `envorganizer/cupcake_<adjuster-member>.txt` under `DATA`)
 Here is how the exports should look in case you are wondering:
 [envSetAirDensity](https://raw.githubusercontent.com/dvdvideo1234/EnvironmentOrganizer/master/data/envorganizer/maglev_envSetAirDensity.txt),
