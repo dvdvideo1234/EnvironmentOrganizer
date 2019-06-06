@@ -19,7 +19,7 @@ This addon is here to make it run automatically on startup when enabled based on
 My life was going to be much easier back then when I recorded [this](https://www.youtube.com/watch?v=herJj_aRJvY).
 
 #### Hey, Did you make the icon of the tool yourself and where is it from ?
-Yes I did. It's located in [Santa Yotso][ref-yotso], [Ochindol][ref-ochin], [municipality of Mezdra](https://www.mezdra.bg/), [Vratsa region][ref-vratsa], [Bulgaria](https://en.wikipedia.org/wiki/Bulgaria) and fact is the exact [street view][ref-view]
+Yes I did. It's located in [Santa Yotso][ref-yotso], [Ochindol][ref-ochin], [municipality of Mezdra](https://www.mezdra.bg/), [Vratsa region][ref-vratsa], [Bulgaria](https://en.wikipedia.org/wiki/Bulgaria) and in fact, [this is the exact street view][ref-view]
 I've shot with my phone in march 2016. It was a panorama picture. After that I used a common icon for `settings` using google.
 
 #### How can I use this script ?
