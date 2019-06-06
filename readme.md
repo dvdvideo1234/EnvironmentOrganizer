@@ -19,7 +19,7 @@ This addon is here to make it run automatically on startup when enabled based on
 My life was going to be much easier back then when I recorded [this](https://www.youtube.com/watch?v=herJj_aRJvY).
 
 #### Hey, Did you make the icon of the tool yourself and where is it from ?
-Yes I did. It's located in Ochindol, [municipality of Mezdra](https://www.mezdra.bg/) [Vratsa region][ref-vratsa], [Bulgaria](https://en.wikipedia.org/wiki/Bulgaria) and fact is the exact [street view](https://www.google.bg/maps/@43.0882408,23.4751913,3a,75y,177.71h,81.92t/data=!3m6!1e1!3m4!1ssN4kRVgtbcKK_SVxgQ_SsQ!2e0!7i13312!8i6656?hl=en)
+Yes I did. It's located in [Santa Yotso][ref-yotso] [Ochindol][ref-ochin], [municipality of Mezdra](https://www.mezdra.bg/) [Vratsa region][ref-vratsa], [Bulgaria](https://en.wikipedia.org/wiki/Bulgaria) and fact is the exact [street view][ref-view]
 I've shot with my phone in march 2016. It was a panorama picture. After that I used a common icon for `settings` using google.
 
 #### How can I use this script ?
@@ -101,3 +101,6 @@ Instead of doing stupid things, and confuse everybody with your actions, **forci
 of this script**, just put a link leading to this repository there in a comment. That was not so hard was it?
 
 [ref-vratsa]: https://www.google.com/maps/place/Vraca/@43.3932066,23.3010897,9.28z/data=!4m5!3m4!1s0x40ab6c5c9309a44b:0x300a01269bf4dc0!8m2!3d43.2101806!4d23.552921
+[ref-yotso]: https://www.google.com/maps/place/Santa+Yotso/@43.0880201,23.4750233,21z/data=!4m13!1m7!3m6!1s0x40aae1b6bd60a773:0xa00a014cd0ec9e0!2s3162+Ochindol!3b1!8m2!3d43.1058483!4d23.4755065!3m4!1s0x0:0x654aac8685ef06a4!8m2!3d43.0880817!4d23.4749339
+[ref-ochin]: https://www.google.com/maps/place/3162+Ochindol/@43.1047732,23.4705068,16z/data=!3m1!4b1!4m5!3m4!1s0x40aae1b6bd60a773:0xa00a014cd0ec9e0!8m2!3d43.1058483!4d23.4755065
+[ref-view]: https://www.google.bg/maps/@43.0882408,23.4751913,3a,75y,177.71h,81.92t/data=!3m6!1e1!3m4!1ssN4kRVgtbcKK_SVxgQ_SsQ!2e0!7i13312!8i6656?hl=en
