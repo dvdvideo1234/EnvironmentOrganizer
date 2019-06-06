@@ -19,7 +19,7 @@ This addon is here to make it run automatically on startup when enabled based on
 My life was going to be much easier back then when I recorded [this](https://www.youtube.com/watch?v=herJj_aRJvY).
 
 #### Hey, Did you make the icon of the tool yourself and where is it from ?
-Yes I did. It's located in Ochindol, Vratsa, Bulgaria and fact is the exact [street view](https://www.google.bg/maps/@43.0882408,23.4751913,3a,75y,177.71h,81.92t/data=!3m6!1e1!3m4!1ssN4kRVgtbcKK_SVxgQ_SsQ!2e0!7i13312!8i6656?hl=en)
+Yes I did. It's located in Ochindol, [municipality of Mezdra](https://www.mezdra.bg/) [Vratsa region][ref-vratsa], [Bulgaria](https://en.wikipedia.org/wiki/Bulgaria) and fact is the exact [street view](https://www.google.bg/maps/@43.0882408,23.4751913,3a,75y,177.71h,81.92t/data=!3m6!1e1!3m4!1ssN4kRVgtbcKK_SVxgQ_SsQ!2e0!7i13312!8i6656?hl=en)
 I've shot with my phone in march 2016. It was a panorama picture. After that I used a common icon for `settings` using google.
 
 #### How can I use this script ?
@@ -99,3 +99,5 @@ Here is how the exports should look in case you are wondering:
 No! I will never give you my permission to upload this into a third-party website!
 Instead of doing stupid things, and confuse everybody with your actions, **forcing them to use a malicious copy
 of this script**, just put a link leading to this repository there in a comment. That was not so hard was it?
+
+[ref-vratsa]: https://www.google.com/maps/place/Vraca/@43.3932066,23.3010897,9.28z/data=!4m5!3m4!1s0x40ab6c5c9309a44b:0x300a01269bf4dc0!8m2!3d43.2101806!4d23.552921
